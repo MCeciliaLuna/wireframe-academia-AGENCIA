@@ -17,6 +17,52 @@ window.ACADEMIA = (function () {
     perfil: "Corporate",
   };
 
+  /* -- Fechas ----------------------------------------------------------------
+     Los timestamps del prototipo son ISO local con segundos, en ART (UTC-3):
+     `2026-06-08T16:05:12`. Los segundos existen porque son el desempate del
+     ranking. Las etiquetas legibles (DD/MM/YYYY) se derivan de la ISO y nunca
+     se cargan a mano, para que no puedan quedar desfasadas.
+
+     Se parsean por string y no con `new Date` a propósito: el prototipo se abre
+     sobre `file://` en cualquier navegador y el formateo no debe depender de la
+     zona horaria de la máquina. */
+  function fechaCorta(iso) {
+    if (!iso) return null;
+    const partes = iso.slice(0, 10).split("-");
+    return partes[2] + "/" + partes[1] + "/" + partes[0];
+  }
+
+  function isoHoy() {
+    const d = new Date();
+    return (
+      d.getFullYear() +
+      "-" +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(d.getDate()).padStart(2, "0")
+    );
+  }
+
+  /* "Hoy 10:12" si el acceso es del día, si no la fecha corta. `null` cuando la
+     persona nunca entró: la vista decide cómo nombrar esa ausencia. */
+  function etiquetaAcceso(iso) {
+    if (!iso) return null;
+    return iso.slice(0, 10) === isoHoy() ? "Hoy " + iso.slice(11, 16) : fechaCorta(iso);
+  }
+
+  /* Clave numérica para ordenar timestamps en atributos `data-*`, que solo
+     guardan strings. `-1` deja las filas sin actividad siempre al final. */
+  function ordenFecha(iso) {
+    return iso ? Number(iso.replace(/\D/g, "")) : -1;
+  }
+
+  /* Ordinal en masculino porque concuerda con "puesto" ("vas 5º"), no con la
+     persona: así el ranking no genera a nadie. `null` es quien todavía no tiene
+     puesto, y lo resuelve la vista con su propio copy. */
+  function ordinal(n) {
+    return n ? n + "º" : null;
+  }
+
   /* Módulos del recorrido Corporate. `estado` es el estado inicial del
      prototipo; el desbloqueo secuencial lo recalcula progreso.js en runtime. */
   const modulos = [
@@ -28,7 +74,7 @@ window.ACADEMIA = (function () {
         "Panorama general del sistema, navegación y conceptos base de sigmma.net.",
       estado: "aprobado",
       nota: 9,
-      fechaAprobacion: "02/06/2026",
+      aprobadoEn: "2026-06-02T11:20:35",
       meetSolicitada: null,
       videos: 6,
       vistos: 6,
@@ -40,7 +86,7 @@ window.ACADEMIA = (function () {
       resumen: "Carga, edición y búsqueda de clientes y pasajeros en el sistema.",
       estado: "aprobado",
       nota: 8,
-      fechaAprobacion: "08/06/2026",
+      aprobadoEn: "2026-06-08T16:05:12",
       meetSolicitada: "09/06",
       videos: 4,
       vistos: 4,
@@ -54,7 +100,7 @@ window.ACADEMIA = (function () {
         "En este módulo vas a ver cómo cotizar, emitir y modificar reservas de vuelos desde el ERP: búsqueda de disponibilidad, reglas tarifarias, emisión, reemisión y cancelaciones. Al terminar los videos, hacé la evaluación para desbloquear el módulo siguiente.",
       estado: "en-progreso",
       nota: null,
-      fechaAprobacion: null,
+      aprobadoEn: null,
       meetSolicitada: null,
       videos: 8,
       vistos: 2,
@@ -66,7 +112,7 @@ window.ACADEMIA = (function () {
       resumen: "Cómo componer paquetes, márgenes y condiciones comerciales.",
       estado: "disponible",
       nota: null,
-      fechaAprobacion: null,
+      aprobadoEn: null,
       meetSolicitada: null,
       videos: 7,
       vistos: 0,
@@ -366,20 +412,75 @@ window.ACADEMIA = (function () {
 
   /* Vista agregada de la agencia. Solo métricas de capacitación: sin datos
      personales sensibles ni respuestas individuales de las evaluaciones. */
+  /* `ultimaAprobacion` es el timestamp del módulo aprobado más reciente y es el
+     desempate del ranking: entre dos personas con la misma cantidad de módulos,
+     va primero la que llegó antes a ese número. Paula y Lucía empatan en 2 a
+     propósito, para que el desempate se pueda ver en el prototipo. */
   const empleados = [
-    /* `aprobados` de la usuaria logueada se recalcula abajo desde `modulos`,
+    /* Los datos de la usuaria logueada se recalculan abajo desde `modulos`,
        para que las tres pantallas nunca muestren números distintos. */
-    { nombre: "Lucía Fernández", esVos: true, aprobados: 0, ultimoAcceso: "Hoy 10:12" },
-    { nombre: "Martín Ruiz", aprobados: 10, certificado: true, ultimoAcceso: "28/07/2026" },
-    { nombre: "Carla Domínguez", aprobados: 6, ultimoAcceso: "30/07/2026" },
-    { nombre: "Diego Sosa", aprobados: 4, ultimoAcceso: "25/07/2026" },
-    { nombre: "Paula Iglesias", aprobados: 2, ultimoAcceso: "19/07/2026" },
-    { nombre: "Nicolás Vera", aprobados: 0, ultimoAcceso: null },
+    {
+      id: 1,
+      nombre: "Lucía Fernández",
+      esVos: true,
+      aprobados: 0,
+      ultimaAprobacion: null,
+      ultimoAccesoISO: isoHoy() + "T10:12:00",
+    },
+    {
+      id: 2,
+      nombre: "Martín Ruiz",
+      aprobados: 10,
+      certificado: true,
+      ultimaAprobacion: "2026-07-28T09:41:22",
+      ultimoAccesoISO: "2026-07-28T17:03:41",
+    },
+    {
+      id: 3,
+      nombre: "Carla Domínguez",
+      aprobados: 6,
+      ultimaAprobacion: "2026-07-21T15:08:47",
+      ultimoAccesoISO: "2026-07-30T11:26:19",
+    },
+    {
+      id: 4,
+      nombre: "Diego Sosa",
+      aprobados: 4,
+      ultimaAprobacion: "2026-07-14T10:33:04",
+      ultimoAccesoISO: "2026-07-25T09:12:58",
+    },
+    {
+      id: 5,
+      nombre: "Paula Iglesias",
+      aprobados: 2,
+      ultimaAprobacion: "2026-06-05T18:52:09",
+      ultimoAccesoISO: "2026-07-19T14:47:33",
+    },
+    {
+      id: 6,
+      nombre: "Nicolás Vera",
+      aprobados: 0,
+      ultimaAprobacion: null,
+      ultimoAccesoISO: null,
+    },
   ];
 
-  empleados[0].aprobados = modulos.filter(function (m) {
+  const aprobadosUsuaria = modulos.filter(function (m) {
     return m.estado === "aprobado";
-  }).length;
+  });
+  empleados[0].aprobados = aprobadosUsuaria.length;
+  empleados[0].ultimaAprobacion = aprobadosUsuaria.reduce(function (ultimo, m) {
+    return !ultimo || m.aprobadoEn > ultimo ? m.aprobadoEn : ultimo;
+  }, null);
+
+  /* Etiquetas legibles derivadas de las ISO. Se hace acá, una sola vez, y no en
+     cada vista: el dato de presentación no se carga a mano en ningún lado. */
+  modulos.forEach(function (m) {
+    m.fechaAprobacion = fechaCorta(m.aprobadoEn);
+  });
+  empleados.forEach(function (e) {
+    e.ultimoAcceso = etiquetaAcceso(e.ultimoAccesoISO);
+  });
 
   const soporte = {
     /* Canal único de soporte en toda la app: WhatsApp en pestaña nueva. */
@@ -432,7 +533,48 @@ window.ACADEMIA = (function () {
       return Math.round((suma / (empleados.length * modulos.length)) * 100);
     },
 
+    /* Ranking de la agencia por completitud del recorrido.
+
+       Criterio, en cascada:
+         1. módulos aprobados, descendente
+         2. `ultimaAprobacion`, ascendente — llegó antes a ese número
+
+       No hay tercer criterio: con precisión de segundos el empate real es
+       despreciable, y `Array.prototype.sort` es estable (ES2019), así que si
+       ocurriera el orden no cambia entre renders.
+
+       Quien no aprobó ningún módulo queda fuera de la numeración
+       (`posicion: null`) y se ordena alfabéticamente al final: no hay nada que
+       comparar entre ellos y numerarlos sería solo señalarlos.
+
+       Recibe `lista` opcional porque `agencia.html` arma una lista alternativa
+       para `?state=empty`. Devuelve copias: no muta `empleados`. */
+    ranking(lista) {
+      const base = (lista || empleados).slice();
+      const conAvance = base.filter((e) => e.aprobados > 0);
+      const sinAvance = base.filter((e) => e.aprobados === 0);
+
+      conAvance.sort((a, b) => {
+        if (a.aprobados !== b.aprobados) return b.aprobados - a.aprobados;
+        /* Las ISO se comparan como strings: el orden lexicográfico es el
+           cronológico. Sin timestamp va al final del empate, no al principio. */
+        const ta = a.ultimaAprobacion || "9999";
+        const tb = b.ultimaAprobacion || "9999";
+        return ta < tb ? -1 : ta > tb ? 1 : 0;
+      });
+      sinAvance.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+
+      return conAvance
+        .map((e, i) => Object.assign({}, e, { posicion: i + 1 }))
+        .concat(sinAvance.map((e) => Object.assign({}, e, { posicion: null })));
+    },
+
     /* -- Formato ----------------------------------------------------------- */
+    fechaCorta,
+    etiquetaAcceso,
+    ordenFecha,
+    ordinal,
+    isoHoy,
     hoyCorto() {
       const d = new Date();
       return (

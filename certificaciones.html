@@ -77,6 +77,10 @@
               <span class="font-bold" id="cert-progreso-pct"></span>
             </div>
             <div class="progress" id="cert-progreso"><span style="width: 0%"></span></div>
+            <!-- Tu puesto en la agencia. Solo el tuyo: sin nombres ajenos y sin
+                 color, porque es un dato y no un veredicto. -->
+            <p class="mt-1 text-sm" id="cert-puesto"></p>
+            <p class="meta" id="cert-puesto-nota"></p>
           </div>
         </div>
 
@@ -161,6 +165,41 @@
           boton.removeAttribute("href");
           tooltip.hidden = false;
           tooltip.textContent = "Disponible al aprobar los " + total + " módulos";
+        }
+
+        /* Puesto en la agencia. Con `?state=complete` la usuaria aparece con el
+           recorrido terminado, así que el ranking se recalcula sobre esa
+           variante: si no, la pantalla diría que completó todo y seguiría 5.ª.
+           La aprobación se fecha hoy, así que queda detrás de quien terminó
+           antes — el mismo criterio de desempate que en `agencia.html`. */
+        const plantel = completo
+          ? ACADEMIA.empleados.map(function (e) {
+              return e.esVos
+                ? Object.assign({}, e, {
+                    aprobados: total,
+                    ultimaAprobacion: ACADEMIA.isoHoy() + "T23:59:59",
+                  })
+                : e;
+            })
+          : ACADEMIA.empleados;
+
+        const rankeados = ACADEMIA.ranking(plantel);
+        const yo = rankeados.filter(function (e) { return e.esVos; })[0];
+        const miPuesto = yo ? yo.posicion : null;
+        const puestoEl = document.getElementById("cert-puesto");
+        const puestoNota = document.getElementById("cert-puesto-nota");
+
+        if (miPuesto) {
+          puestoEl.innerHTML =
+            "<strong>" + ACADEMIA.ordinal(miPuesto) + " de " + rankeados.length +
+            "</strong> en " + ACADEMIA.usuario.agencia +
+            ' · <a class="link-quiet" href="agencia.html?ver=ranking">Ver el ranking</a>';
+          /* Sin esto, dos personas con el mismo número no entienden por qué una
+             va arriba de la otra. */
+          puestoNota.textContent = "Por módulos aprobados. Desempata quien llegó antes.";
+        } else {
+          puestoEl.textContent = "Vas a entrar al ranking cuando apruebes tu primer módulo.";
+          puestoNota.hidden = true;
         }
 
         /* Tabla informativa: cada fila lleva al detalle del módulo. */

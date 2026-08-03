@@ -69,22 +69,65 @@
       </div>
 
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <div class="card flex flex-col gap-1 p-5">
-          <span class="eyebrow">Personas</span>
+        <div class="card flex flex-col gap-1 p-5" data-filtro-card="todos">
+          <div class="flex items-center justify-between gap-2">
+            <span class="eyebrow">Personas</span>
+            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="todos" aria-pressed="false">
+              <span class="icon icon-sm" data-icon="eye"></span>Ver
+            </button>
+          </div>
           <span class="text-h3" id="m-total"></span>
         </div>
-        <div class="card flex flex-col gap-1 p-5">
-          <span class="eyebrow">Con actividad</span>
+        <div class="card flex flex-col gap-1 p-5" data-filtro-card="activos">
+          <div class="flex items-center justify-between gap-2">
+            <span class="eyebrow">Con actividad</span>
+            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="activos" aria-pressed="false">
+              <span class="icon icon-sm" data-icon="eye"></span>Ver
+            </button>
+          </div>
           <span class="text-h3" id="m-activos"></span>
         </div>
-        <div class="card flex flex-col gap-1 p-5">
-          <span class="eyebrow">Recorrido completo</span>
+        <div class="card flex flex-col gap-1 p-5" data-filtro-card="completos">
+          <div class="flex items-center justify-between gap-2">
+            <span class="eyebrow">Completado</span>
+            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="completos" aria-pressed="false">
+              <span class="icon icon-sm" data-icon="eye"></span>Ver
+            </button>
+          </div>
           <span class="text-h3" id="m-completos"></span>
         </div>
-        <div class="card flex flex-col gap-1 p-5">
-          <span class="eyebrow">Sin empezar</span>
+        <div class="card flex flex-col gap-1 p-5" data-filtro-card="sin-empezar">
+          <div class="flex items-center justify-between gap-2">
+            <span class="eyebrow">Sin empezar</span>
+            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="sin-empezar" aria-pressed="false">
+              <span class="icon icon-sm" data-icon="eye"></span>Ver
+            </button>
+          </div>
           <span class="text-h3" id="m-sin-empezar"></span>
         </div>
+      </div>
+
+      <!-- Tu puesto. Card aparte y no un quinto chip: los otros cuatro son
+           conteos de la agencia que filtran filas, esto es un dato personal que
+           cambia el orden de la tabla. Misma familia visual, fila propia. -->
+      <div
+        class="card flex flex-col gap-3 p-5 md:flex-row md:items-center md:justify-between"
+        id="card-puesto"
+        data-filtro-card="ranking"
+      >
+        <div class="flex flex-col gap-1">
+          <span class="eyebrow">Tu puesto en <span data-user-agency></span></span>
+          <span class="text-h3" id="puesto-valor"></span>
+          <p class="meta" id="puesto-nota"></p>
+        </div>
+        <button
+          class="btn btn-ghost btn-sm shrink-0 self-start md:self-auto"
+          type="button"
+          data-filtro-btn="ranking"
+          aria-pressed="false"
+        >
+          <span class="icon icon-sm" data-icon="eye"></span>Ver ranking
+        </button>
       </div>
 
       <!-- Vacío (12b): la agencia existe pero nadie arrancó todavía. -->
@@ -100,11 +143,22 @@
 
       <section id="bloque-tabla" class="flex flex-col gap-3">
         <h2 class="sr-only">Progreso por persona</h2>
+        <p class="meta flex items-center gap-2" id="filtro-info" aria-live="polite" hidden>
+          <span id="filtro-verbo"></span>
+          <span class="font-bold text-gray-800" id="filtro-etiqueta"></span>
+          <button class="link-quiet" type="button" id="filtro-quitar"></button>
+        </p>
         <div class="table-wrap">
           <div class="table-scroll">
             <table class="table-app" data-sortable>
               <thead>
                 <tr>
+                  <th class="col-ranking" style="width: 56px" data-sort-key="puesto" data-sort-type="number">
+                    <button class="th-sort" type="button" aria-sort="none">
+                      <span aria-hidden="true">#</span><span class="sr-only">Puesto</span>
+                      <span class="icon" data-icon="sort"></span>
+                    </button>
+                  </th>
                   <th data-sort-key="nombre">
                     <button class="th-sort" type="button" aria-sort="none">
                       Persona<span class="icon" data-icon="sort"></span>
@@ -121,6 +175,7 @@
                       Último acceso<span class="icon" data-icon="sort"></span>
                     </button>
                   </th>
+                  <th class="col-ranking" style="width: 150px">Estado</th>
                 </tr>
               </thead>
               <tbody id="tabla-empleados"></tbody>
@@ -147,7 +202,9 @@
               return Object.assign({}, e, {
                 aprobados: 0,
                 certificado: false,
+                ultimaAprobacion: null,
                 ultimoAcceso: null,
+                ultimoAccesoISO: null,
               });
             })
           : ACADEMIA.empleados;
@@ -173,31 +230,71 @@
         document.getElementById("m-completos").textContent = completos;
         document.getElementById("m-sin-empezar").textContent = sinEmpezar;
 
+        /* Ranking: se calcula una sola vez y las dos vistas (card y tabla) leen
+           de acá, para que el puesto que ves arriba sea el de tu fila. */
+        const rankeados = ACADEMIA.ranking(empleados);
+        const puestoPorId = {};
+        rankeados.forEach(function (e) {
+          puestoPorId[e.id] = e.posicion;
+        });
+        const yo = rankeados.filter(function (e) { return e.esVos; })[0];
+        const miPuesto = yo ? yo.posicion : null;
+
+        document.getElementById("puesto-valor").textContent = miPuesto
+          ? ACADEMIA.ordinal(miPuesto) + " de " + empleados.length
+          : "—";
+        document.getElementById("puesto-nota").textContent = miPuesto
+          ? "Por módulos aprobados. Desempata quien llegó antes."
+          : "Vas a entrar al ranking cuando apruebes tu primer módulo.";
+
         if (activos === 0) {
           document.getElementById("vacio").hidden = false;
           document.getElementById("bloque-tabla").hidden = true;
+          /* Sin actividad no hay a quién ranquear: la card se va con la tabla. */
+          document.getElementById("card-puesto").hidden = true;
           ["m-activos", "m-completos"].forEach(function (id) {
             document.getElementById(id).classList.add("text-ink-soft");
           });
         }
 
-        /* `data-orden` da un criterio numérico estable para ordenar el último
-           acceso, que en pantalla se muestra en lenguaje natural. */
+        /* `data-orden` da el criterio numérico para ordenar el último acceso,
+           que en pantalla se muestra en lenguaje natural. Sale del timestamp
+           real: sin actividad ordena -1 y queda siempre al final. */
         document.getElementById("tabla-empleados").innerHTML = empleados
-          .map(function (e, i) {
+          .map(function (e) {
             const pct = Math.round((e.aprobados / total) * 100);
             const inactivo = !e.ultimoAcceso;
+            const completo = e.aprobados === total;
+            const puesto = puestoPorId[e.id] || null;
+            /* Badge de estado del ranking. La escala es success / info / gris:
+               nunca rojo ni ámbar sobre una persona por no haber capacitado. */
+            const estado = completo
+              ? '<span class="badge badge-success"><span class="icon icon-sm" data-icon="award"></span>Certificado</span>'
+              : e.aprobados > 0
+                ? '<span class="badge badge-info"><span class="icon icon-sm" data-icon="play"></span>En curso</span>'
+                : '<span class="badge badge-muted">Sin empezar</span>';
             return (
-              '<tr data-nombre="' + e.nombre + '" data-aprobados="' + e.aprobados +
-              '" data-orden="' + (inactivo ? -1 : empleados.length - i) + '"' +
+              '<tr data-id="' + e.id + '" data-nombre="' + e.nombre + '" data-aprobados="' + e.aprobados +
+              '" data-orden="' + ACADEMIA.ordenFecha(e.ultimoAccesoISO) + '"' +
+              /* Sin puesto ordena al final en ascendente, que es como se lee. */
+              ' data-puesto="' + (puesto || 999) + '"' +
+              ' data-activo="' + Boolean(e.ultimoAcceso) + '"' +
+              ' data-completo="' + completo + '"' +
+              ' data-sin-empezar="' + (e.aprobados === 0) + '"' +
+              (e.esVos ? ' data-vos="true"' : "") +
               (inactivo ? ' data-muted="true"' : "") + ">" +
+              '<td class="col-ranking">' +
+              (puesto
+                ? '<span class="font-bold">' + puesto + "</span>"
+                : '<span class="text-ink-soft">—</span>') +
+              "</td>" +
               "<td>" +
               '<span class="font-bold">' + e.nombre + "</span>" +
               (e.esVos ? '<span class="meta"> (vos)</span>' : "") +
               "</td>" +
               "<td>" + e.aprobados + " de " + total +
               (e.certificado
-                ? ' <span class="badge badge-success"><span class="icon icon-sm" data-icon="award"></span>Certificado</span>'
+                ? ' <span class="badge badge-success col-plain"><span class="icon icon-sm" data-icon="award"></span>Certificado</span>'
                 : "") +
               "</td>" +
               '<td><div class="flex items-center gap-3">' +
@@ -205,12 +302,102 @@
               '<span class="w-10 shrink-0 text-right text-xs">' + pct + " %</span>" +
               "</div></td>" +
               '<td class="text-ink-soft">' + (e.ultimoAcceso || "Sin actividad") + "</td>" +
+              '<td class="col-ranking">' + estado + "</td>" +
               "</tr>"
             );
           })
           .join("");
 
         renderIcons();
+
+        /* Los chips del dashboard duplican como filtros de la tabla: cada uno
+           tiene su propio criterio de fila y se puede volver a apretar para
+           quitar el filtro. "Personas" es el criterio "todos" (reset).
+
+           El ranking entra en la misma máquina para que sea mutuamente
+           excluyente con los filtros sin lógica paralela, pero no oculta filas:
+           las reordena y muestra dos columnas más. */
+        const criterios = {
+          todos: function () { return true; },
+          ranking: function () { return true; },
+          activos: function (tr) { return tr.dataset.activo === "true"; },
+          completos: function (tr) { return tr.dataset.completo === "true"; },
+          "sin-empezar": function (tr) { return tr.dataset.sinEmpezar === "true"; },
+        };
+        /* El ranking no muestra un subconjunto sino otro orden, así que cambia
+           el verbo: "Ordenado por puesto", no "Mostrando puesto". */
+        const verbos = { ranking: "Ordenado por" };
+        const etiquetas = {
+          activos: "con actividad",
+          completos: "recorrido completado",
+          "sin-empezar": "sin empezar",
+          ranking: "puesto",
+        };
+        let filtroActual = "todos";
+
+        const tabla = document.querySelector("table[data-sortable]");
+        const cuerpo = document.getElementById("tabla-empleados");
+        /* Orden de partida, para poder volver al salir del ranking. */
+        const ordenOriginal = Array.prototype.slice.call(cuerpo.querySelectorAll("tr"));
+
+        function mostrarFiltro(valor) {
+          filtroActual = valor;
+          const esRanking = filtroActual === "ranking";
+
+          document.querySelectorAll("#tabla-empleados tr").forEach(function (tr) {
+            tr.hidden = !criterios[filtroActual](tr);
+          });
+
+          /* Reordenar y no reconstruir: las filas son las mismas, cambian de
+             lugar. Así el estado de los filtros y el foco no se pierden. */
+          tabla.classList.toggle("is-ranking", esRanking);
+          (esRanking
+            ? rankeados.map(function (e) {
+                return cuerpo.querySelector('[data-id="' + e.id + '"]');
+              })
+            : ordenOriginal
+          ).forEach(function (tr) {
+            if (tr) cuerpo.appendChild(tr);
+          });
+
+          document.querySelectorAll("[data-filtro-card]").forEach(function (card) {
+            const activo = card.dataset.filtroCard === filtroActual && filtroActual !== "todos";
+            card.classList.toggle("border-primary-light", activo);
+            card.classList.toggle("bg-info-bg", activo);
+          });
+          document.querySelectorAll("[data-filtro-btn]").forEach(function (btn) {
+            btn.setAttribute(
+              "aria-pressed",
+              String(btn.dataset.filtroBtn === filtroActual && filtroActual !== "todos")
+            );
+          });
+
+          const info = document.getElementById("filtro-info");
+          info.hidden = filtroActual === "todos";
+          if (!info.hidden) {
+            document.getElementById("filtro-verbo").textContent =
+              verbos[filtroActual] || "Mostrando";
+            document.getElementById("filtro-etiqueta").textContent = etiquetas[filtroActual];
+            document.getElementById("filtro-quitar").textContent = esRanking
+              ? "Salir del ranking"
+              : "Ver todos";
+          }
+        }
+
+        document.querySelectorAll("[data-filtro-btn]").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            const valor = btn.dataset.filtroBtn;
+            /* Volver a apretar el filtro activo lo quita. */
+            mostrarFiltro(filtroActual === valor ? "todos" : valor);
+          });
+        });
+        document.getElementById("filtro-quitar").addEventListener("click", function () {
+          mostrarFiltro("todos");
+        });
+
+        /* Deep link: el ranking es un estado de pantalla y se abre por URL,
+           como el resto de los estados del prototipo. */
+        if (UI.param("ver") === "ranking") mostrarFiltro("ranking");
       })();
     </script>
   </body>

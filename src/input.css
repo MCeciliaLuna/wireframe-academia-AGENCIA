@@ -1186,6 +1186,35 @@
   .table-app tbody tr[data-muted="true"] td {
     color: var(--color-ink-soft);
   }
+
+  /* -- Vista de ranking ------------------------------------------------------
+     Las columnas de puesto y estado se renderizan siempre y se muestran con la
+     clase en la tabla: alternar la vista no reconstruye el tbody, así que no se
+     pelea con los filtros, que operan sobre `tr.hidden`. */
+  .table-app .col-ranking {
+    display: none;
+  }
+  .table-app.is-ranking .col-ranking {
+    display: table-cell;
+  }
+  /* Contrapartida: el badge de certificado se muda a la columna Estado cuando
+     hay ranking, en vez de aparecer dos veces en la misma fila. */
+  .table-app.is-ranking .col-plain {
+    display: none;
+  }
+  /* Puesto (56) + estado (150) ensanchan la tabla. Solo acá: la de
+     certificaciones.html no tiene por qué crecer. */
+  .table-app.is-ranking {
+    min-width: 880px;
+  }
+  /* Tu fila. Es el único fondo de color de la tabla — el resto del estado lo
+     comunican los badges, que llevan texto e ícono y no dependen del color. */
+  .table-app.is-ranking tbody tr[data-vos="true"] {
+    background: var(--color-info-bg);
+  }
+  .table-app.is-ranking tbody tr[data-vos="true"]:hover {
+    background: color-mix(in srgb, var(--color-info) 10%, var(--color-info-bg));
+  }
   .th-sort {
     display: inline-flex;
     align-items: center;
