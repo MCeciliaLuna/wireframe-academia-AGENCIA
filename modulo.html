@@ -175,6 +175,12 @@
           return Math.round(seg / 60) + " min";
         }
 
+        /* "3:40" (M:SS de mock-data.js) → "03:40 min". */
+        function duracionVideo(d) {
+          const partes = d.split(":");
+          return partes[0].padStart(2, "0") + ":" + partes[1] + " min";
+        }
+
         function fila(v) {
           const estaVisto = aprobado || v.visto;
           const enCurso = !estaVisto && v.progreso > 0;
@@ -195,7 +201,7 @@
             icono +
             '<span class="video-thumb"><span class="icon icon-sm" data-icon="play"></span></span>' +
             '<span class="min-w-0 flex-1 text-sm ' + (enCurso ? "font-bold text-ink" : "text-gray-800") + '">' + v.titulo + "</span>" +
-            '<span class="meta hidden sm:block">' + v.duracion + "</span>" +
+            '<span class="meta hidden shrink-0 md:block">' + duracionVideo(v.duracion) + "</span>" +
             badge +
             "</a>"
           );
