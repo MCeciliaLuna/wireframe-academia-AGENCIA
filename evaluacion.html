@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Evaluación · Academia SIGMMA</title>
+    <meta name="description" content="Evaluación del módulo: 10 preguntas, se aprueba con 8." />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="stylesheet" href="assets/css/academia.css" />
+  </head>
+  <body class="bg-surface">
+    <!-- Chrome reducido: durante una evaluación no hay navegación lateral. La
+         única salida es explícita y guarda el intento. -->
+    <header class="app-header">
+      <div class="container-app flex items-center gap-4">
+        <span class="flex shrink-0 items-center gap-3">
+          <img src="assets/img/logo.svg" alt="SIGMMA" width="124" height="20" class="w-[124px]" />
+          <span class="h-6 w-px bg-line" aria-hidden="true"></span>
+          <span class="text-h6 font-bold text-primary">Academia</span>
+        </span>
+        <span class="hidden text-sm text-ink-soft md:block">
+          Evaluación · <span class="font-bold text-gray-800" data-modulo-titulo></span>
+        </span>
+        <a class="link-quiet ml-auto" href="modulo.html" id="salir">Salir y guardar</a>
+      </div>
+    </header>
+
+    <main id="contenido" class="container-app page">
+      <div class="mx-auto w-full max-w-narrow">
+        <!-- ══════════ 05 · INTRO ══════════ -->
+        <section id="fase-intro" class="animate-enter flex flex-col gap-6 rounded-xl border border-line bg-white p-6 md:p-8" hidden>
+          <div>
+            <span class="eyebrow" data-modulo-eyebrow></span>
+            <h1 class="mt-2 text-h3">Evaluación: <span data-modulo-titulo></span></h1>
+            <p class="mt-2 text-gray-700">Antes de empezar, así funciona.</p>
+          </div>
+
+          <ul class="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+            <li class="flex items-start gap-3 p-4 text-sm text-gray-800">
+              <span class="icon shrink-0 text-primary" data-icon="list-checks"></span>
+              <span><strong>10 preguntas</strong> tomadas al azar de un banco de 50.</span>
+            </li>
+            <li class="flex items-start gap-3 p-4 text-sm text-gray-800">
+              <span class="icon shrink-0 text-primary" data-icon="target"></span>
+              <span>Se aprueba con <strong>8 de 10</strong> (80 %).</span>
+            </li>
+            <li class="flex items-start gap-3 p-4 text-sm text-gray-800">
+              <span class="icon shrink-0 text-primary" data-icon="refresh"></span>
+              <span><strong>Reintentos ilimitados.</strong> Si no aprobás, el intento siguiente trae 10 preguntas nuevas.</span>
+            </li>
+            <li class="flex items-start gap-3 p-4 text-sm text-gray-800">
+              <span class="icon shrink-0 text-primary" data-icon="clock"></span>
+              <span><strong>Sin límite de tiempo.</strong> Podés salir y retomar en la misma pregunta.</span>
+            </li>
+          </ul>
+
+          <p class="meta" id="intro-historial"></p>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button class="btn btn-primary btn-lg" type="button" id="empezar">Comenzar evaluación</button>
+            <a class="link-quiet" href="modulo.html" id="volver-modulo">Volver al módulo</a>
+          </div>
+        </section>
+
+        <!-- ══════════ 06 · EN CURSO ══════════ -->
+        <section id="fase-quiz" class="flex flex-col gap-5 rounded-xl border border-line bg-white p-6 md:p-8" hidden>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-baseline justify-between gap-3 text-sm">
+              <span class="font-bold">Pregunta <span id="q-indice"></span> de <span id="q-total"></span></span>
+              <span class="text-ink-soft">Se aprueba con 8/10</span>
+            </div>
+            <div class="steps" id="q-steps" role="presentation"></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div>
+            <h1 class="text-h4" id="q-texto"></h1>
+            <fieldset class="mt-5 flex flex-col gap-2.5" id="q-opciones">
+              <legend class="sr-only">Elegí una opción</legend>
+            </fieldset>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+            <button class="btn btn-bordered" type="button" id="q-anterior">
+              <span class="icon" data-icon="arrow-left"></span>Anterior
+            </button>
+            <!-- El hint va a la izquierda del botón para que aparecer no
+                 desplace el CTA hacia abajo. -->
+            <div class="flex items-center gap-3">
+              <span class="hint text-right text-warning-dark" id="q-hint" role="status"></span>
+              <button class="btn btn-primary" type="button" id="q-siguiente">Siguiente</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════ 07 / 08 · RESULTADO ══════════ -->
+        <section id="fase-resultado" class="animate-enter flex flex-col gap-6" hidden>
+          <div id="r-cabecera" class="flex flex-col items-start gap-5 rounded-xl border p-6 md:flex-row md:items-center md:p-8">
+            <div id="r-nota" class="grid h-24 w-24 shrink-0 place-items-center rounded-full border-4 bg-white">
+              <span class="text-h3 leading-none" id="r-nota-valor"></span>
+              <span class="mt-1 text-2xs font-bold uppercase tracking-wider text-ink-soft">Nota</span>
+            </div>
+            <div class="flex flex-col items-start gap-2">
+              <span id="r-badge"></span>
+              <h1 class="text-h3" id="r-titulo"></h1>
+              <p class="text-gray-700" id="r-bajada"></p>
+            </div>
+          </div>
+
+          <!-- Aprobado: desbloqueo y progreso -->
+          <div id="r-aprobado" class="flex flex-col gap-5" hidden>
+            <div class="alert alert-success">
+              <span class="icon" data-icon="unlock"></span>
+              <p id="r-desbloqueo"></p>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div class="flex items-baseline justify-between text-sm">
+                <span class="font-bold">Progreso general</span>
+                <span class="text-ink-soft" id="r-progreso-texto"></span>
+              </div>
+              <div class="progress"><span id="r-progreso-barra" style="width: 0%"></span></div>
+            </div>
+            <div class="flex flex-col gap-3 border-t border-line pt-5">
+              <div class="flex flex-wrap gap-3">
+                <a class="btn btn-primary btn-lg" id="r-siguiente-modulo" href="modulos.html">Ir al siguiente módulo</a>
+                <a class="btn btn-bordered btn-lg" id="r-meet" href="meet.html"><span class="icon" data-icon="message"></span>Solicitar Meet con soporte</a>
+              </div>
+              <a class="link-quiet self-start" href="modulos.html">Volver al listado de módulos</a>
+            </div>
+          </div>
+
+          <!-- Desaprobado: repaso -->
+          <div id="r-desaprobado" class="flex flex-col gap-5" hidden>
+            <div>
+              <div class="flex flex-wrap items-baseline gap-x-3">
+                <h2 class="text-h4">Para repasar</h2>
+                <span class="meta" id="r-erradas-conteo"></span>
+              </div>
+              <p class="mt-1 text-sm text-ink-soft">
+                Estas son las preguntas que no acertaste. No mostramos cuál era la correcta: está
+                explicada en los videos del módulo.
+              </p>
+            </div>
+            <div class="flex flex-col gap-3" id="r-erradas"></div>
+            <div class="flex flex-col gap-3 border-t border-line pt-5">
+              <div class="flex flex-wrap gap-3">
+                <button class="btn btn-primary btn-lg" type="button" id="r-reintentar">Volver a intentar</button>
+                <a class="btn btn-bordered btn-lg" id="r-revisar" href="modulo.html">Revisar videos del módulo</a>
+              </div>
+              <p class="hint">«Volver a intentar» toma 10 preguntas nuevas al azar del banco.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- ══════════ 15 · CONFIRMACIÓN CON PREGUNTAS SIN RESPONDER ══════════ -->
+    <div class="modal" id="modal-sin-responder" role="dialog" aria-modal="true" aria-labelledby="msr-titulo" data-on-escape="volverAResponder" hidden>
+      <div class="modal-overlay"></div>
+      <div class="modal-panel">
+        <span class="placeholder-icon bg-warning-bg text-warning-dark"><span class="icon icon-lg" data-icon="alert-circle"></span></span>
+        <h2 class="mt-4 text-h4" id="msr-titulo">Tenés preguntas sin responder</h2>
+        <p class="mt-2 text-gray-700">
+          Quedaron <strong id="msr-cantidad"></strong>. Si terminás ahora, se cuentan como
+          incorrectas.
+        </p>
+        <p class="mt-4 rounded-md border border-line bg-surface p-3 text-sm text-gray-700">
+          Sin responder: <span class="font-bold" id="msr-lista"></span>
+        </p>
+        <div class="mt-6 flex flex-col-reverse gap-2.5 md:flex-row md:justify-end">
+          <button class="btn btn-bordered" type="button" id="msr-terminar">Terminar igual</button>
+          <button class="btn btn-primary" type="button" id="msr-volver" data-autofocus>Volver a responder</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/icons.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script src="assets/js/quiz.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        const moduloId = Number(UI.param("m") || 3);
+        const modulo = ACADEMIA.modulo(moduloId) || ACADEMIA.modulo(3);
+        let intento = null;
+
+        document.title = "Evaluación: " + modulo.titulo + " · Academia SIGMMA";
+        document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
+          el.textContent = modulo.titulo;
+        });
+        document.querySelector("[data-modulo-eyebrow]").textContent =
+          "Módulo " + String(modulo.id).padStart(2, "0");
+        ["salir", "volver-modulo", "r-revisar"].forEach(function (id) {
+          const el = document.getElementById(id);
+          if (el) el.href = "modulo.html?m=" + moduloId;
+        });
+
+        const fases = {
+          intro: document.getElementById("fase-intro"),
+          quiz: document.getElementById("fase-quiz"),
+          result: document.getElementById("fase-resultado"),
+        };
+
+        function mostrar(fase) {
+          Object.keys(fases).forEach(function (k) {
+            fases[k].hidden = k !== fase;
+          });
+          window.scrollTo({ top: 0, behavior: "auto" });
+        }
+
+        /* -- 05 · Intro -------------------------------------------------- */
+        function pintarIntro() {
+          const enCurso = Quiz.leer(moduloId);
+          const historial = document.getElementById("intro-historial");
+          const boton = document.getElementById("empezar");
+          if (enCurso) {
+            historial.textContent =
+              "Tenés un intento sin terminar, en la pregunta " +
+              (enCurso.indice + 1) +
+              " de " +
+              enCurso.preguntas.length +
+              ". Al retomarlo seguís con las mismas preguntas.";
+            boton.textContent = "Retomar evaluación";
+          } else if (modulo.estado === "aprobado") {
+            historial.textContent =
+              "Ya aprobaste este módulo con " + modulo.nota + "/10 el " + modulo.fechaAprobacion +
+              ". Podés rendirlo de nuevo las veces que quieras.";
+            boton.textContent = "Comenzar evaluación";
+          } else {
+            historial.textContent = "Intentos previos: ninguno.";
+            boton.textContent = "Comenzar evaluación";
+          }
+          mostrar("intro");
+        }
+
+        document.getElementById("empezar").addEventListener("click", function () {
+          intento = Quiz.leer(moduloId) || Quiz.nuevoIntento(moduloId);
+          Quiz.guardar(intento);
+          pintarPregunta();
+          mostrar("quiz");
+        });
+
+        /* -- 06 · En curso ------------------------------------------------ */
+        const qTexto = document.getElementById("q-texto");
+        const qOpciones = document.getElementById("q-opciones");
+        const qSteps = document.getElementById("q-steps");
+        const qHint = document.getElementById("q-hint");
+        const qAnterior = document.getElementById("q-anterior");
+        const qSiguiente = document.getElementById("q-siguiente");
+
+        function pintarPregunta() {
+          const total = intento.preguntas.length;
+          const id = intento.preguntas[intento.indice];
+          const q = Quiz.pregunta(id);
+          const elegida = intento.respuestas[id];
+
+          document.getElementById("q-indice").textContent = intento.indice + 1;
+          document.getElementById("q-total").textContent = total;
+          qTexto.textContent = q.texto;
+
+          qSteps.innerHTML = intento.preguntas
+            .map(function (pid, i) {
+              const estado =
+                i === intento.indice
+                  ? "current"
+                  : intento.respuestas[pid] !== undefined
+                  ? "done"
+                  : "";
+              return "<span" + (estado ? ' data-state="' + estado + '"' : "") + "></span>";
+            })
+            .join("");
+
+          qOpciones.innerHTML =
+            '<legend class="sr-only">Elegí una opción</legend>' +
+            q.opciones
+              .map(function (texto, i) {
+                return (
+                  '<label class="choice"><input type="radio" name="opcion" value="' + i + '"' +
+                  (elegida === i ? " checked" : "") + " />" +
+                  '<span class="choice-text">' + texto + "</span></label>"
+                );
+              })
+              .join("");
+
+          qAnterior.disabled = intento.indice === 0;
+          qSiguiente.textContent =
+            intento.indice === total - 1 ? "Terminar evaluación" : "Siguiente";
+          qHint.textContent = "";
+        }
+
+        qOpciones.addEventListener("change", function (event) {
+          const id = intento.preguntas[intento.indice];
+          intento.respuestas[id] = Number(event.target.value);
+          Quiz.guardar(intento);
+          qHint.textContent = "";
+          /* Repinta solo los pasos, para no perder el foco del radio elegido. */
+          qSteps.querySelectorAll("span").forEach(function (s, i) {
+            if (i === intento.indice) return;
+            if (intento.respuestas[intento.preguntas[i]] !== undefined)
+              s.dataset.state = "done";
+          });
+        });
+
+        qAnterior.addEventListener("click", function () {
+          if (intento.indice > 0) {
+            intento.indice--;
+            Quiz.guardar(intento);
+            pintarPregunta();
+          }
+        });
+
+        qSiguiente.addEventListener("click", function () {
+          const ultima = intento.indice === intento.preguntas.length - 1;
+          const id = intento.preguntas[intento.indice];
+
+          if (!ultima) {
+            if (intento.respuestas[id] === undefined) {
+              qHint.textContent = "Elegí una opción para continuar.";
+              return;
+            }
+            intento.indice++;
+            Quiz.guardar(intento);
+            pintarPregunta();
+            return;
+          }
+
+          const faltan = Quiz.sinResponder(intento);
+          if (faltan.length) abrirConfirmacion(faltan);
+          else terminar();
+        });
+
+        /* -- 15 · Confirmación -------------------------------------------- */
+        function abrirConfirmacion(faltan) {
+          document.getElementById("msr-cantidad").textContent =
+            faltan.length === 1
+              ? "1 pregunta sin responder"
+              : faltan.length + " preguntas sin responder";
+          document.getElementById("msr-lista").textContent =
+            faltan.length === 1
+              ? "pregunta " + faltan[0]
+              : "preguntas " + faltan.slice(0, -1).join(", ") + " y " + faltan[faltan.length - 1];
+          UI.showModal("modal-sin-responder");
+        }
+
+        window.volverAResponder = function () {
+          UI.closeModal();
+          const faltan = Quiz.sinResponder(intento);
+          if (faltan.length) {
+            intento.indice = faltan[0] - 1;
+            Quiz.guardar(intento);
+            pintarPregunta();
+          }
+        };
+        document.getElementById("msr-volver").addEventListener("click", window.volverAResponder);
+        document.getElementById("msr-terminar").addEventListener("click", function () {
+          UI.closeModal();
+          terminar();
+        });
+
+        /* -- 07 / 08 · Resultado ------------------------------------------- */
+        function terminar() {
+          Quiz.descartar(moduloId);
+          pintarResultado(Quiz.corregir(intento));
+        }
+
+        function pintarResultado(r) {
+          const cabecera = document.getElementById("r-cabecera");
+          const nota = document.getElementById("r-nota");
+          document.getElementById("r-nota-valor").textContent = r.correctas + "/" + r.total;
+
+          if (r.aprobado) {
+            cabecera.className =
+              "flex flex-col items-start gap-5 rounded-xl border border-success-line bg-success-bg p-6 md:flex-row md:items-center md:p-8";
+            nota.className =
+              "grid h-24 w-24 shrink-0 place-items-center rounded-full border-4 border-success bg-white";
+            document.getElementById("r-nota-valor").classList.add("text-success-dark");
+            document.getElementById("r-badge").innerHTML =
+              '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobado</span>';
+            document.getElementById("r-titulo").textContent = "Aprobaste " + modulo.titulo;
+            document.getElementById("r-bajada").textContent =
+              "Superaste el umbral del 80 %. Buen trabajo.";
+            document.getElementById("r-aprobado").hidden = false;
+            document.getElementById("r-desaprobado").hidden = true;
+
+            const siguiente = ACADEMIA.modulo(modulo.id + 1);
+            const aprobados = Math.min(ACADEMIA.total(), ACADEMIA.aprobados() + 1);
+            const pct = Math.round((aprobados / ACADEMIA.total()) * 100);
+
+            if (siguiente) {
+              document.getElementById("r-desbloqueo").innerHTML =
+                "Se desbloqueó el <strong>Módulo " +
+                String(siguiente.id).padStart(2, "0") + " · " + siguiente.titulo +
+                "</strong>. Ya podés empezarlo cuando quieras.";
+              document.getElementById("r-siguiente-modulo").href = "modulo.html?m=" + siguiente.id;
+            } else {
+              document.getElementById("r-desbloqueo").innerHTML =
+                "<strong>Completaste tu recorrido.</strong> Tu certificado ya está disponible.";
+              const cta = document.getElementById("r-siguiente-modulo");
+              cta.textContent = "Ver mi certificado";
+              cta.href = "certificaciones.html?state=complete";
+            }
+            document.getElementById("r-progreso-texto").textContent =
+              aprobados + " de " + ACADEMIA.total() + " módulos · " + pct + " %";
+            document.getElementById("r-progreso-barra").style.width = pct + "%";
+
+            /* Una sola Meet por módulo: si ya se pidió, el CTA no vuelve. */
+            if (modulo.meetSolicitada) document.getElementById("r-meet").hidden = true;
+            else document.getElementById("r-meet").href = "meet.html?m=" + modulo.id;
+          } else {
+            const faltan = ACADEMIA.quizConfig.umbral - r.correctas;
+            cabecera.className =
+              "flex flex-col items-start gap-5 rounded-xl border border-line bg-surface p-6 md:flex-row md:items-center md:p-8";
+            nota.className =
+              "grid h-24 w-24 shrink-0 place-items-center rounded-full border-4 border-line-strong bg-white";
+            document.getElementById("r-badge").innerHTML =
+              '<span class="badge badge-warning">No alcanzaste el umbral</span>';
+            document.getElementById("r-titulo").textContent =
+              faltan === 1
+                ? "Te faltó 1 respuesta para aprobar"
+                : "Te faltaron " + faltan + " respuestas para aprobar";
+            document.getElementById("r-bajada").textContent =
+              "Repasá los puntos de abajo y volvé a intentarlo cuando quieras: los intentos son ilimitados.";
+            document.getElementById("r-aprobado").hidden = true;
+            document.getElementById("r-desaprobado").hidden = false;
+
+            document.getElementById("r-erradas-conteo").textContent =
+              r.erradas.length + " de " + r.total;
+            document.getElementById("r-erradas").innerHTML = r.erradas
+              .map(function (e) {
+                const elegida =
+                  e.elegida === undefined
+                    ? '<div class="choice choice-wrong"><span class="icon mt-0.5 text-error" data-icon="x"></span><span class="choice-text text-ink-soft">No respondiste esta pregunta.</span><span class="badge badge-error ml-auto shrink-0">Sin responder</span></div>'
+                    : '<div class="choice choice-wrong"><span class="icon mt-0.5 text-error" data-icon="x"></span><span class="choice-text line-through">' +
+                      e.pregunta.opciones[e.elegida] +
+                      '</span><span class="badge badge-error ml-auto shrink-0">Tu respuesta</span></div>';
+                return (
+                  '<article class="flex flex-col gap-3 rounded-xl border border-line bg-white p-5">' +
+                  '<div class="flex flex-wrap items-center gap-x-3"><span class="eyebrow">Pregunta ' + e.numero + "</span>" +
+                  '<span class="badge badge-muted">' + e.pregunta.subtema + "</span></div>" +
+                  '<p class="font-bold text-ink">' + e.pregunta.texto + "</p>" +
+                  elegida +
+                  "</article>"
+                );
+              })
+              .join("");
+          }
+
+          mostrar("result");
+          renderIcons();
+        }
+
+        document.getElementById("r-reintentar").addEventListener("click", function () {
+          intento = Quiz.nuevoIntento(moduloId);
+          Quiz.guardar(intento);
+          pintarPregunta();
+          mostrar("quiz");
+        });
+
+        /* -- Arranque ------------------------------------------------------ */
+        const fase = UI.param("phase");
+        if (fase === "result") {
+          const nota = Number(UI.param("score") || 9);
+          intento = Quiz.resultadoDemo(moduloId, nota);
+          pintarResultado(Quiz.corregir(intento));
+        } else if (fase === "quiz") {
+          intento = Quiz.nuevoIntento(moduloId);
+          if (UI.param("confirm") === "1") {
+            /* Pantalla 15: última pregunta, con tres sin responder. */
+            intento.preguntas.forEach(function (id, i) {
+              if ([3, 5, 8].indexOf(i) === -1)
+                intento.respuestas[id] = Quiz.pregunta(id).correcta;
+            });
+            intento.indice = intento.preguntas.length - 1;
+            pintarPregunta();
+            mostrar("quiz");
+            abrirConfirmacion(Quiz.sinResponder(intento));
+          } else {
+            intento.indice = 2;
+            intento.respuestas[intento.preguntas[0]] = 1;
+            intento.respuestas[intento.preguntas[1]] = 0;
+            Quiz.guardar(intento);
+            pintarPregunta();
+            mostrar("quiz");
+          }
+        } else {
+          pintarIntro();
+        }
+      })();
+    </script>
+  </body>
+</html>

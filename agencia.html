@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mi agencia · Academia SIGMMA</title>
+    <meta name="description" content="Progreso de capacitación agregado de tu agencia." />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="stylesheet" href="assets/css/academia.css" />
+  </head>
+  <body>
+    <!-- app-shell: sincronizar con src/partials/app-header.html -->
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[1001] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-white">Saltar al contenido</a>
+    <header class="app-header">
+      <div class="container-app flex items-center gap-4">
+        <a href="modulos.html" class="flex shrink-0 items-center gap-3" aria-label="Academia SIGMMA, ir al listado de módulos">
+          <img src="assets/img/logo.svg" alt="SIGMMA" width="124" height="20" class="w-[124px]" />
+          <span class="h-6 w-px bg-line" aria-hidden="true"></span>
+          <span class="text-h6 font-bold text-primary">Academia</span>
+        </a>
+        <nav class="ml-auto hidden items-center gap-1 md:flex" aria-label="Secciones">
+          <a href="modulos.html" class="nav-link">Módulos</a>
+          <a href="certificaciones.html" class="nav-link">Mis certificaciones</a>
+          <a href="agencia.html" class="nav-link" aria-current="page">Mi agencia</a>
+        </nav>
+        <span class="hidden h-7 w-px bg-line md:block" aria-hidden="true"></span>
+        <div class="relative ml-auto flex items-center gap-3 md:ml-0" data-dropdown>
+          <div class="hidden text-right leading-tight md:block">
+            <span class="block text-sm font-bold text-gray-800" data-user-name></span>
+            <span class="block text-2xs text-ink-soft"><span data-user-agency></span> · <span data-user-profile></span></span>
+          </div>
+          <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-info-line bg-info-bg text-2xs font-bold text-primary transition-colors duration-300 hover:border-primary-light aria-expanded:border-primary aria-expanded:bg-primary aria-expanded:text-white" data-dropdown-trigger aria-expanded="false" aria-haspopup="true" aria-label="Menú de usuario"><span data-user-initials></span></button>
+          <div class="menu" role="menu" data-dropdown-menu hidden>
+            <a href="index.html" class="menu-item" role="menuitem"><span class="icon icon-sm" data-icon="logout"></span>Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+    </header>
+    <nav class="sticky z-[999] border-b border-surface-sunken bg-white md:hidden" style="top: var(--header-height)" aria-label="Secciones">
+      <div class="container-app flex gap-1 overflow-x-auto py-2">
+        <a href="modulos.html" class="nav-link">Módulos</a>
+        <a href="certificaciones.html" class="nav-link">Mis certificaciones</a>
+        <a href="agencia.html" class="nav-link" aria-current="page">Mi agencia</a>
+      </div>
+    </nav>
+    <!-- /app-shell -->
+
+    <main id="contenido" class="container-app page flex flex-col gap-8">
+      <div class="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+        <div>
+          <h1 class="text-h2">Progreso de <span data-user-agency></span></h1>
+          <p class="mt-2 max-w-xl text-gray-700">
+            Perfil <span class="font-bold" data-user-profile></span> ·
+            <span data-total-modulos></span> módulos en el recorrido. Solo métricas de capacitación.
+          </p>
+        </div>
+        <div class="flex w-full flex-col gap-2 lg:w-[360px]">
+          <div class="flex items-baseline justify-between text-sm">
+            <span class="font-bold">Avance agregado</span>
+            <span class="text-ink-soft" id="avance-pct"></span>
+          </div>
+          <div class="progress progress-lg"><span id="avance-barra" style="width: 0%"></span></div>
+          <p class="meta">
+            Promedio de módulos aprobados sobre los <span data-total-modulos></span> del recorrido,
+            entre <span data-total-empleados></span> personas.
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="card flex flex-col gap-1 p-5">
+          <span class="eyebrow">Personas</span>
+          <span class="text-h3" id="m-total"></span>
+        </div>
+        <div class="card flex flex-col gap-1 p-5">
+          <span class="eyebrow">Con actividad</span>
+          <span class="text-h3" id="m-activos"></span>
+        </div>
+        <div class="card flex flex-col gap-1 p-5">
+          <span class="eyebrow">Recorrido completo</span>
+          <span class="text-h3" id="m-completos"></span>
+        </div>
+        <div class="card flex flex-col gap-1 p-5">
+          <span class="eyebrow">Sin empezar</span>
+          <span class="text-h3" id="m-sin-empezar"></span>
+        </div>
+      </div>
+
+      <!-- Vacío (12b): la agencia existe pero nadie arrancó todavía. -->
+      <div id="vacio" class="placeholder-box" hidden>
+        <span class="placeholder-icon"><span class="icon icon-lg" data-icon="users"></span></span>
+        <h2 class="text-h4">Todavía nadie de tu agencia empezó un módulo</h2>
+        <p class="max-w-md text-gray-700">
+          Cuando alguien vea su primer video o rinda una evaluación, el progreso del equipo va a
+          aparecer acá.
+        </p>
+        <a class="btn btn-primary mt-2" href="modulos.html">Empezar mi recorrido</a>
+      </div>
+
+      <section id="bloque-tabla" class="flex flex-col gap-3">
+        <h2 class="sr-only">Progreso por persona</h2>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table class="table-app" data-sortable>
+              <thead>
+                <tr>
+                  <th data-sort-key="nombre">
+                    <button class="th-sort" type="button" aria-sort="none">
+                      Persona<span class="icon" data-icon="sort"></span>
+                    </button>
+                  </th>
+                  <th style="width: 180px" data-sort-key="aprobados" data-sort-type="number">
+                    <button class="th-sort" type="button" aria-sort="none">
+                      Módulos aprobados<span class="icon" data-icon="sort"></span>
+                    </button>
+                  </th>
+                  <th style="width: 240px">Avance del recorrido</th>
+                  <th style="width: 150px" data-sort-key="orden" data-sort-type="number">
+                    <button class="th-sort" type="button" aria-sort="none">
+                      Último acceso<span class="icon" data-icon="sort"></span>
+                    </button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="tabla-empleados"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="meta">
+          Vista de solo lectura. No se muestran datos personales ni las respuestas individuales de
+          las evaluaciones.
+        </p>
+      </section>
+    </main>
+
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/icons.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        const vacio = UI.param("state") === "empty";
+        const total = ACADEMIA.total();
+        const empleados = vacio
+          ? ACADEMIA.empleados.map(function (e) {
+              return Object.assign({}, e, {
+                aprobados: 0,
+                certificado: false,
+                ultimoAcceso: null,
+              });
+            })
+          : ACADEMIA.empleados;
+
+        const activos = empleados.filter(function (e) { return e.ultimoAcceso; }).length;
+        const completos = empleados.filter(function (e) { return e.aprobados === total; }).length;
+        const sinEmpezar = empleados.filter(function (e) { return e.aprobados === 0; }).length;
+        const avance = Math.round(
+          (empleados.reduce(function (a, e) { return a + e.aprobados; }, 0) /
+            (empleados.length * total)) * 100
+        );
+
+        document.querySelectorAll("[data-total-modulos]").forEach(function (el) {
+          el.textContent = total;
+        });
+        document.querySelectorAll("[data-total-empleados]").forEach(function (el) {
+          el.textContent = empleados.length;
+        });
+        document.getElementById("avance-pct").textContent = avance + " %";
+        document.getElementById("avance-barra").style.width = avance + "%";
+        document.getElementById("m-total").textContent = empleados.length;
+        document.getElementById("m-activos").textContent = activos;
+        document.getElementById("m-completos").textContent = completos;
+        document.getElementById("m-sin-empezar").textContent = sinEmpezar;
+
+        if (activos === 0) {
+          document.getElementById("vacio").hidden = false;
+          document.getElementById("bloque-tabla").hidden = true;
+          ["m-activos", "m-completos"].forEach(function (id) {
+            document.getElementById(id).classList.add("text-ink-soft");
+          });
+        }
+
+        /* `data-orden` da un criterio numérico estable para ordenar el último
+           acceso, que en pantalla se muestra en lenguaje natural. */
+        document.getElementById("tabla-empleados").innerHTML = empleados
+          .map(function (e, i) {
+            const pct = Math.round((e.aprobados / total) * 100);
+            const inactivo = !e.ultimoAcceso;
+            return (
+              '<tr data-nombre="' + e.nombre + '" data-aprobados="' + e.aprobados +
+              '" data-orden="' + (inactivo ? -1 : empleados.length - i) + '"' +
+              (inactivo ? ' data-muted="true"' : "") + ">" +
+              "<td>" +
+              '<span class="font-bold">' + e.nombre + "</span>" +
+              (e.esVos ? '<span class="meta"> (vos)</span>' : "") +
+              "</td>" +
+              "<td>" + e.aprobados + " de " + total +
+              (e.certificado
+                ? ' <span class="badge badge-success"><span class="icon icon-sm" data-icon="award"></span>Certificado</span>'
+                : "") +
+              "</td>" +
+              '<td><div class="flex items-center gap-3">' +
+              '<div class="progress progress-sm min-w-0 flex-1' + (pct === 100 ? " progress-complete" : "") + '"><span style="width:' + pct + '%"></span></div>' +
+              '<span class="w-10 shrink-0 text-right text-xs">' + pct + " %</span>" +
+              "</div></td>" +
+              '<td class="text-ink-soft">' + (e.ultimoAcceso || "Sin actividad") + "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+
+        renderIcons();
+      })();
+    </script>
+  </body>
+</html>

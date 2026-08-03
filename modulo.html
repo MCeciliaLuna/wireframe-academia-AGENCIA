@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Módulo · Academia SIGMMA</title>
+    <meta name="description" content="Contenido del módulo: secciones, videos y evaluación." />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="stylesheet" href="assets/css/academia.css" />
+  </head>
+  <body>
+    <!-- app-shell: sincronizar con src/partials/app-header.html -->
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[1001] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-white">Saltar al contenido</a>
+    <header class="app-header">
+      <div class="container-app flex items-center gap-4">
+        <a href="modulos.html" class="flex shrink-0 items-center gap-3" aria-label="Academia SIGMMA, ir al listado de módulos">
+          <img src="assets/img/logo.svg" alt="SIGMMA" width="124" height="20" class="w-[124px]" />
+          <span class="h-6 w-px bg-line" aria-hidden="true"></span>
+          <span class="text-h6 font-bold text-primary">Academia</span>
+        </a>
+        <nav class="ml-auto hidden items-center gap-1 md:flex" aria-label="Secciones">
+          <a href="modulos.html" class="nav-link" aria-current="page">Módulos</a>
+          <a href="certificaciones.html" class="nav-link">Mis certificaciones</a>
+          <a href="agencia.html" class="nav-link">Mi agencia</a>
+        </nav>
+        <span class="hidden h-7 w-px bg-line md:block" aria-hidden="true"></span>
+        <div class="relative ml-auto flex items-center gap-3 md:ml-0" data-dropdown>
+          <div class="hidden text-right leading-tight md:block">
+            <span class="block text-sm font-bold text-gray-800" data-user-name></span>
+            <span class="block text-2xs text-ink-soft"><span data-user-agency></span> · <span data-user-profile></span></span>
+          </div>
+          <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-info-line bg-info-bg text-2xs font-bold text-primary transition-colors duration-300 hover:border-primary-light aria-expanded:border-primary aria-expanded:bg-primary aria-expanded:text-white" data-dropdown-trigger aria-expanded="false" aria-haspopup="true" aria-label="Menú de usuario"><span data-user-initials></span></button>
+          <div class="menu" role="menu" data-dropdown-menu hidden>
+            <a href="index.html" class="menu-item" role="menuitem"><span class="icon icon-sm" data-icon="logout"></span>Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+    </header>
+    <nav class="sticky z-[999] border-b border-surface-sunken bg-white md:hidden" style="top: var(--header-height)" aria-label="Secciones">
+      <div class="container-app flex gap-1 overflow-x-auto py-2">
+        <a href="modulos.html" class="nav-link" aria-current="page">Módulos</a>
+        <a href="certificaciones.html" class="nav-link">Mis certificaciones</a>
+        <a href="agencia.html" class="nav-link">Mi agencia</a>
+      </div>
+    </nav>
+    <!-- /app-shell -->
+
+    <main id="contenido" class="container-app page flex flex-col gap-7">
+      <nav aria-label="Ruta">
+        <ol class="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+          <li><a href="modulos.html" class="hover:underline">Módulos</a></li>
+          <li aria-hidden="true" class="text-ink-muted">/</li>
+          <li class="font-bold text-gray-800" aria-current="page" data-modulo-titulo></li>
+        </ol>
+      </nav>
+
+      <!-- Barra de módulo aprobado (pantalla 14b). Solo aparece si el módulo ya
+           se aprobó. El CTA de Meet se reemplaza por texto plano una vez enviada
+           la solicitud: es un estado permanente, no un botón deshabilitado. -->
+      <div id="barra-aprobado" class="flex flex-col gap-4 rounded-xl border border-success-line bg-success-bg p-5 md:flex-row md:items-center" hidden>
+        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-success-dark text-white"><span class="icon icon-lg" data-icon="check"></span></span>
+        <p class="flex-1 text-sm text-success-dark">
+          <strong class="text-base">Módulo aprobado</strong><br />
+          Nota <span class="font-bold" data-nota></span>/10 · <span data-fecha-aprobacion></span>
+        </p>
+        <p id="meet-hecha" class="flex items-center gap-2 text-sm text-success-dark" hidden>
+          <span class="icon icon-sm" data-icon="check"></span>Meet solicitada el <span data-meet-fecha></span>
+        </p>
+        <a id="meet-cta" class="btn btn-bordered btn-sm" href="meet.html"><span class="icon" data-icon="message"></span>Solicitar Meet con soporte</a>
+        <a id="rehacer-cta" class="btn btn-primary btn-sm" href="evaluacion.html">Rehacer evaluación</a>
+      </div>
+
+      <div class="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <!-- Cabecera y syllabus -->
+        <div class="flex min-w-0 flex-1 flex-col gap-8">
+          <div>
+            <span class="eyebrow" data-modulo-eyebrow></span>
+            <h1 class="mt-2 text-h2" data-modulo-titulo></h1>
+            <p class="mt-3 max-w-2xl text-gray-700" data-modulo-descripcion></p>
+          </div>
+
+          <div id="secciones" class="flex flex-col gap-6"></div>
+        </div>
+
+        <!-- Panel de progreso del módulo -->
+        <aside class="w-full shrink-0 lg:sticky lg:top-[96px] lg:w-[340px]">
+          <div class="brand-edge-soft flex flex-col gap-4 rounded-xl p-6">
+            <div class="flex flex-col gap-2">
+              <div class="flex items-baseline justify-between text-sm">
+                <span class="font-bold">Videos vistos</span>
+                <span class="text-ink-soft" data-videos-texto></span>
+              </div>
+              <div class="progress"><span data-videos-barra style="width: 0%"></span></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="flex items-center justify-between gap-3 text-sm">
+              <span class="text-gray-700">Estado de la evaluación</span>
+              <span data-estado-evaluacion></span>
+            </div>
+
+            <a id="evaluacion-cta" class="btn btn-primary btn-lg btn-block" href="evaluacion.html">
+              Hacer la evaluación
+            </a>
+            <p class="hint">
+              Siempre disponible: no hace falta ver todos los videos para rendir. Son 10 preguntas y
+              se aprueba con 8.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/icons.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        const id = Number(UI.param("m") || 3);
+        const m = ACADEMIA.modulo(id) || ACADEMIA.modulo(3);
+        const aprobado = m.estado === "aprobado";
+        const meetHecha = UI.param("meet") === "solicitada" || Boolean(m.meetSolicitada);
+
+        document.title = m.titulo + " · Academia SIGMMA";
+        document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
+          el.textContent = m.titulo;
+        });
+        document.querySelector("[data-modulo-eyebrow]").textContent =
+          "Módulo " + String(m.id).padStart(2, "0");
+        document.querySelector("[data-modulo-descripcion]").textContent =
+          m.descripcion || m.resumen;
+
+        /* Barra de módulo aprobado */
+        if (aprobado) {
+          const barra = document.getElementById("barra-aprobado");
+          barra.hidden = false;
+          barra.querySelector("[data-nota]").textContent = m.nota;
+          barra.querySelector("[data-fecha-aprobacion]").textContent = m.fechaAprobacion;
+          document.getElementById("rehacer-cta").href = "evaluacion.html?m=" + m.id;
+          if (meetHecha) {
+            document.getElementById("meet-cta").hidden = true;
+            const hecha = document.getElementById("meet-hecha");
+            hecha.hidden = false;
+            hecha.querySelector("[data-meet-fecha]").textContent =
+              m.meetSolicitada || ACADEMIA.hoyCorto();
+          } else {
+            document.getElementById("meet-cta").href = "meet.html?m=" + m.id;
+          }
+        }
+
+        /* Syllabus. Solo el módulo 03 tiene contenido cargado en el prototipo;
+           los demás lo reutilizan, marcado como visto si el módulo está aprobado. */
+        const secciones = ACADEMIA.secciones;
+        const videos = ACADEMIA.videosDelModulo();
+        const vistos = aprobado ? videos.length : videos.filter(function (v) { return v.visto; }).length;
+        const pct = Math.round((vistos / videos.length) * 100);
+
+        document.querySelector("[data-videos-texto]").textContent =
+          vistos + " de " + videos.length + " · " + pct + " %";
+        document.querySelector("[data-videos-barra]").style.width = pct + "%";
+        document.querySelector("[data-estado-evaluacion]").innerHTML = aprobado
+          ? '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobada ' + m.nota + "/10</span>"
+          : '<span class="badge badge-warning">No rendida</span>';
+        document.getElementById("evaluacion-cta").href = "evaluacion.html?m=" + m.id;
+        if (aprobado) {
+          document.getElementById("evaluacion-cta").textContent = "Rehacer la evaluación";
+          document.getElementById("evaluacion-cta").classList.replace("btn-primary", "btn-bordered");
+        }
+
+        function duracionSeccion(s) {
+          const seg = s.videos.reduce(function (a, v) { return a + v.segundos; }, 0);
+          return Math.round(seg / 60) + " min";
+        }
+
+        function fila(v) {
+          const estaVisto = aprobado || v.visto;
+          const enCurso = !estaVisto && v.progreso > 0;
+          let icono, badge;
+          if (estaVisto) {
+            icono = '<span class="icon text-success" data-icon="check-circle"></span>';
+            badge = '<span class="badge badge-success">Visto</span>';
+          } else if (enCurso) {
+            icono = '<span class="icon text-primary" data-icon="play-circle"></span>';
+            badge = '<span class="badge badge-info">Retomar ' + v.progreso + " %</span>";
+          } else {
+            icono = '<span class="icon text-ink-soft" data-icon="play-circle"></span>';
+            badge = '<span class="badge badge-neutral">No visto</span>';
+          }
+          return (
+            '<a class="video-row" href="video.html?v=' + v.id + "&m=" + m.id + '"' +
+            (enCurso ? ' aria-current="true"' : "") + ">" +
+            icono +
+            '<span class="video-thumb"><span class="icon icon-sm" data-icon="play"></span></span>' +
+            '<span class="min-w-0 flex-1 text-sm ' + (enCurso ? "font-bold text-ink" : "text-gray-800") + '">' + v.titulo + "</span>" +
+            '<span class="meta hidden sm:block">' + v.duracion + "</span>" +
+            badge +
+            "</a>"
+          );
+        }
+
+        document.getElementById("secciones").innerHTML = secciones
+          .map(function (s, i) {
+            return (
+              '<section class="flex flex-col gap-3">' +
+              '<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">' +
+              '<h2 class="text-h5">Sección ' + (i + 1) + " · " + s.titulo + "</h2>" +
+              '<span class="meta">' + s.videos.length + " videos · " + duracionSeccion(s) + "</span>" +
+              "</div>" +
+              '<div class="overflow-hidden rounded-xl border border-line">' +
+              s.videos.map(fila).join("") +
+              "</div>" +
+              "</section>"
+            );
+          })
+          .join("");
+
+        renderIcons();
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Módulos · Academia SIGMMA</title>
+    <meta name="description" content="Tu recorrido de módulos en la Academia de Autocapacitación SIGMMA." />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="stylesheet" href="assets/css/academia.css" />
+  </head>
+  <body>
+    <!-- app-shell: sincronizar con src/partials/app-header.html -->
+    <a href="#contenido" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[1001] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-white">Saltar al contenido</a>
+    <header class="app-header">
+      <div class="container-app flex items-center gap-4">
+        <a href="modulos.html" class="flex shrink-0 items-center gap-3" aria-label="Academia SIGMMA, ir al listado de módulos">
+          <img src="assets/img/logo.svg" alt="SIGMMA" width="124" height="20" class="w-[124px]" />
+          <span class="h-6 w-px bg-line" aria-hidden="true"></span>
+          <span class="text-h6 font-bold text-primary">Academia</span>
+        </a>
+        <nav class="ml-auto hidden items-center gap-1 md:flex" aria-label="Secciones">
+          <a href="modulos.html" class="nav-link" aria-current="page">Módulos</a>
+          <a href="certificaciones.html" class="nav-link">Mis certificaciones</a>
+          <a href="agencia.html" class="nav-link">Mi agencia</a>
+        </nav>
+        <span class="hidden h-7 w-px bg-line md:block" aria-hidden="true"></span>
+        <div class="relative ml-auto flex items-center gap-3 md:ml-0" data-dropdown>
+          <div class="hidden text-right leading-tight md:block">
+            <span class="block text-sm font-bold text-gray-800" data-user-name></span>
+            <span class="block text-2xs text-ink-soft"><span data-user-agency></span> · <span data-user-profile></span></span>
+          </div>
+          <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-info-line bg-info-bg text-2xs font-bold text-primary transition-colors duration-300 hover:border-primary-light aria-expanded:border-primary aria-expanded:bg-primary aria-expanded:text-white" data-dropdown-trigger aria-expanded="false" aria-haspopup="true" aria-label="Menú de usuario"><span data-user-initials></span></button>
+          <div class="menu" role="menu" data-dropdown-menu hidden>
+            <a href="index.html" class="menu-item" role="menuitem"><span class="icon icon-sm" data-icon="logout"></span>Cerrar sesión</a>
+          </div>
+        </div>
+      </div>
+    </header>
+    <nav class="sticky z-[999] border-b border-surface-sunken bg-white md:hidden" style="top: var(--header-height)" aria-label="Secciones">
+      <div class="container-app flex gap-1 overflow-x-auto py-2">
+        <a href="modulos.html" class="nav-link" aria-current="page">Módulos</a>
+        <a href="certificaciones.html" class="nav-link">Mis certificaciones</a>
+        <a href="agencia.html" class="nav-link">Mi agencia</a>
+      </div>
+    </nav>
+    <!-- /app-shell -->
+
+    <main id="contenido" class="container-app page flex flex-col gap-8">
+      <div class="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+        <div>
+          <h1 class="text-h2">Tu recorrido</h1>
+          <p class="mt-2 max-w-xl text-gray-700">
+            Videos cortos y una evaluación por módulo. Cada módulo se desbloquea cuando aprobás el
+            anterior.
+          </p>
+        </div>
+        <div class="flex w-full flex-col gap-2 lg:w-[340px]" id="bloque-progreso">
+          <div class="flex items-baseline justify-between text-sm">
+            <span class="font-bold">Progreso general</span>
+            <span class="text-ink-soft"><span data-progreso-texto></span></span>
+          </div>
+          <div class="progress"><span data-progreso-barra style="width: 0%"></span></div>
+          <p class="meta">Perfil <span class="font-bold" data-user-profile></span> · <span data-total-modulos></span> módulos</p>
+        </div>
+        <div class="flex w-full flex-col gap-2 lg:w-[340px]" id="skeleton-progreso" hidden aria-hidden="true">
+          <div class="flex justify-between"><span class="skeleton h-3.5 w-28"></span><span class="skeleton h-3.5 w-36"></span></div>
+          <span class="skeleton h-2 w-full rounded-full"></span>
+          <span class="skeleton h-3 w-40"></span>
+        </div>
+      </div>
+
+      <!-- Carga (12d): el skeleton respeta la geometría real del contenido y
+           aparece recién a los 200 ms para no titilar en cargas rápidas. -->
+      <div id="skeleton" class="grid gap-5 md:grid-cols-2 lg:grid-cols-3" hidden aria-hidden="true">
+        <div class="card flex flex-col gap-3"><span class="skeleton h-3 w-20"></span><span class="skeleton h-5 w-full"></span><span class="skeleton h-3 w-11/12"></span><span class="skeleton h-3 w-2/3"></span><span class="skeleton mt-3 h-9 w-full rounded-lg"></span></div>
+        <div class="card flex flex-col gap-3"><span class="skeleton h-3 w-20"></span><span class="skeleton h-5 w-full"></span><span class="skeleton h-3 w-4/5"></span><span class="skeleton h-3 w-3/4"></span><span class="skeleton mt-3 h-9 w-full rounded-lg"></span></div>
+        <div class="card flex flex-col gap-3"><span class="skeleton h-3 w-20"></span><span class="skeleton h-5 w-full"></span><span class="skeleton h-3 w-10/12"></span><span class="skeleton h-3 w-1/2"></span><span class="skeleton mt-3 h-9 w-full rounded-lg"></span></div>
+        <div class="card flex flex-col gap-3"><span class="skeleton h-3 w-20"></span><span class="skeleton h-5 w-full"></span><span class="skeleton h-3 w-3/4"></span><span class="skeleton h-3 w-2/3"></span><span class="skeleton mt-3 h-9 w-full rounded-lg"></span></div>
+        <div class="card flex flex-col gap-3"><span class="skeleton h-3 w-20"></span><span class="skeleton h-5 w-full"></span><span class="skeleton h-3 w-11/12"></span><span class="skeleton h-3 w-1/2"></span><span class="skeleton mt-3 h-9 w-full rounded-lg"></span></div>
+        <div class="card flex flex-col gap-3"><span class="skeleton h-3 w-20"></span><span class="skeleton h-5 w-full"></span><span class="skeleton h-3 w-4/5"></span><span class="skeleton h-3 w-3/5"></span><span class="skeleton mt-3 h-9 w-full rounded-lg"></span></div>
+      </div>
+
+      <!-- Vacío (12a): conserva el chrome y el encabezado con el progreso en
+           cero, para que la pantalla no se sienta rota sino recién empezada. -->
+      <div id="vacio" class="placeholder-box" hidden>
+        <span class="placeholder-icon"><span class="icon icon-lg" data-icon="list-checks"></span></span>
+        <h2 class="text-h4">Estos son los módulos de tu recorrido</h2>
+        <p class="max-w-md text-gray-700">
+          Empezá por el primero. Cada módulo tiene videos cortos y una evaluación al final; no hace
+          falta ver todo para rendir.
+        </p>
+        <a class="btn btn-primary mt-2" href="modulo.html">Empezar por el módulo 01</a>
+      </div>
+
+      <div id="grilla" class="grid gap-5 md:grid-cols-2 lg:grid-cols-3"></div>
+    </main>
+
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/icons.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        const estado = UI.param("state");
+        const grilla = document.getElementById("grilla");
+        const skeleton = document.getElementById("skeleton");
+        const vacio = document.getElementById("vacio");
+
+        /* Vista de la primera visita: nadie empezó nada todavía. */
+        const primeraVisita = estado === "empty";
+
+        const aprobados = primeraVisita ? 0 : ACADEMIA.aprobados();
+        const total = ACADEMIA.total();
+        const pct = Math.round((aprobados / total) * 100);
+
+        document.querySelector("[data-progreso-texto]").textContent =
+          aprobados + " de " + total + " módulos aprobados";
+        document.querySelector("[data-total-modulos]").textContent = total;
+        document.querySelector("[data-progreso-barra]").style.width = pct + "%";
+
+        function badge(m) {
+          if (m.estado === "aprobado")
+            return '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobado</span>';
+          if (m.estado === "en-progreso")
+            return '<span class="badge badge-info"><span class="icon icon-sm" data-icon="play"></span>En curso</span>';
+          if (m.estado === "bloqueado")
+            return '<span class="badge badge-muted"><span class="icon icon-sm" data-icon="lock"></span>Bloqueado</span>';
+          return '<span class="badge badge-neutral">Disponible</span>';
+        }
+
+        function card(m, indice) {
+          const bloqueado = m.estado === "bloqueado";
+          const activo = m.estado === "en-progreso";
+          const aprobado = m.estado === "aprobado";
+          const href = "modulo.html?m=" + m.id;
+
+          let clase = "card flex flex-col gap-3";
+          if (activo) clase += " card-active";
+          else if (bloqueado) clase += " card-locked relative has-tooltip";
+          else clase += " card-interactive";
+
+          let pie = "";
+          if (aprobado) {
+            pie =
+              '<div class="flex items-center justify-between text-xs text-ink-soft">' +
+              "<span>" + m.videos + " videos</span>" +
+              '<span class="font-bold text-gray-800">Nota ' + m.nota + "/10</span>" +
+              "</div>" +
+              '<a class="btn btn-bordered btn-sm btn-block" href="evaluacion.html?m=' + m.id + '">Rehacer evaluación</a>';
+            /* Tag de Meet solicitada (pantalla 14a): microtexto al pie, nunca
+               compite con el CTA. No es botón: sin hover, sin foco, fuera del
+               orden de tabulación. */
+            if (m.meetSolicitada) {
+              pie +=
+                '<p class="flex items-center justify-center gap-1.5 text-2xs text-ink-soft">' +
+                '<span class="icon icon-sm text-success" data-icon="check"></span>' +
+                "Meet solicitada el " + m.meetSolicitada + "</p>";
+            }
+          } else if (activo) {
+            const avance = Math.round((m.vistos / m.videos) * 100);
+            pie =
+              '<div class="flex flex-col gap-1.5">' +
+              '<div class="flex justify-between text-xs text-ink-soft"><span>' + m.videos + " videos</span><span>" + m.vistos + " vistos</span></div>" +
+              '<div class="progress progress-sm"><span style="width:' + avance + '%"></span></div>' +
+              "</div>" +
+              '<a class="btn btn-primary btn-sm btn-block" href="' + href + '">Continuar</a>';
+          } else if (bloqueado) {
+            pie =
+              '<div class="text-xs text-ink-soft">' + m.videos + " videos</div>" +
+              '<span class="btn btn-sm btn-block" aria-disabled="true">Bloqueado</span>' +
+              '<span class="tooltip" role="tooltip">Aprobá el módulo ' +
+              String(indice).padStart(2, "0") + " para desbloquear</span>";
+          } else {
+            pie =
+              '<div class="text-xs text-ink-soft">' + m.videos + " videos</div>" +
+              '<a class="btn btn-primary btn-sm btn-block" href="' + href + '">Empezar módulo</a>';
+          }
+
+          const titulo = bloqueado
+            ? '<h2 class="card-title clamp-2">' + m.titulo + "</h2>"
+            : '<h2 class="card-title clamp-2"><a class="text-inherit" href="' + href + '">' + m.titulo + "</a></h2>";
+
+          return (
+            '<article class="' + clase + '"' + (bloqueado ? ' aria-disabled="true"' : "") + ">" +
+            '<div class="flex items-start justify-between gap-3">' +
+            '<span class="eyebrow">Módulo ' + String(m.id).padStart(2, "0") + "</span>" +
+            badge(m) +
+            "</div>" +
+            '<div class="flex flex-1 flex-col gap-2">' +
+            titulo +
+            '<p class="text-xs ' + "text-ink-soft" + '">' + m.resumen + "</p>" +
+            "</div>" +
+            pie +
+            "</article>"
+          );
+        }
+
+        function pintar() {
+          /* En la primera visita el módulo 01 es el único disponible y el resto
+             está bloqueado: el desbloqueo es secuencial. */
+          const lista = primeraVisita
+            ? ACADEMIA.modulos.map(function (m, i) {
+                return Object.assign({}, m, {
+                  estado: i === 0 ? "disponible" : "bloqueado",
+                  vistos: 0,
+                  nota: null,
+                  meetSolicitada: null,
+                });
+              })
+            : ACADEMIA.modulos;
+
+          grilla.innerHTML = lista.map(function (m, i) { return card(m, i); }).join("");
+          renderIcons(grilla);
+        }
+
+        if (estado === "loading") {
+          /* El skeleton aparece recién a los 200 ms: en una carga rápida nunca
+             llega a verse, y así no titila. Acá no resuelve nunca, a propósito:
+             es el estado puesto a inspección. */
+          document.getElementById("bloque-progreso").hidden = true;
+          window.setTimeout(function () {
+            skeleton.hidden = false;
+            document.getElementById("skeleton-progreso").hidden = false;
+          }, 200);
+        } else if (primeraVisita) {
+          vacio.hidden = false;
+        } else {
+          pintar();
+        }
+
+        /* Pantalla 13: el menú de avatar abierto sobre el listado. */
+        if (UI.param("menu") === "open") {
+          document.addEventListener("DOMContentLoaded", function () {
+            const trigger = document.querySelector("[data-dropdown-trigger]");
+            if (trigger) trigger.click();
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

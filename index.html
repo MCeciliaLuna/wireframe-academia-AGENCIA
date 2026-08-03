@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ingresar · Academia SIGMMA</title>
+    <meta name="description" content="Acceso a la Academia de Autocapacitación SIGMMA con tus credenciales de sigmma.net." />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="stylesheet" href="assets/css/academia.css" />
+  </head>
+  <body class="min-h-screen bg-surface">
+    <!-- Fondo: wash celeste lateral, el tratamiento de sección de la marca.
+         Profundidad por capas translúcidas azules, no por bloques planos. -->
+    <div
+      class="pointer-events-none fixed inset-0 -z-10"
+      style="
+        background:
+          radial-gradient(60rem 40rem at 100% 0%, rgba(61, 196, 244, 0.16), transparent 60%),
+          radial-gradient(50rem 36rem at 0% 100%, rgba(0, 111, 224, 0.1), transparent 60%);
+      "
+      aria-hidden="true"
+    ></div>
+
+    <main id="contenido" class="container-app grid min-h-screen items-center gap-16 py-12 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <!-- Columna de contexto: qué es esto y qué vas a hacer acá. -->
+      <div class="hidden flex-col gap-8 lg:flex">
+        <a href="design-system.html" class="flex w-fit items-center gap-3" aria-label="Academia SIGMMA">
+          <img src="assets/img/logo.svg" alt="SIGMMA" width="156" height="25" class="w-[156px]" />
+          <span class="h-7 w-px bg-line-strong" aria-hidden="true"></span>
+          <span class="text-h5 font-bold text-primary">Academia</span>
+        </a>
+
+        <div>
+          <h1 class="max-w-lg text-h1 text-indigo-dark">
+            Aprendé el ERP a tu ritmo, módulo por módulo.
+          </h1>
+          <p class="mt-5 max-w-md text-lg text-gray-700">
+            Videos cortos y una evaluación por módulo. Cada aprobación desbloquea el siguiente y te
+            habilita una reunión de 30 minutos con soporte.
+          </p>
+        </div>
+
+        <ul class="flex max-w-md flex-col gap-4">
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-info-bg text-primary"><span class="icon icon-sm" data-icon="video"></span></span>
+            <p class="text-sm text-gray-700"><strong class="text-ink">Videos de 3 a 5 minutos.</strong> Se marcan como vistos al llegar al 80 %.</p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-info-bg text-primary"><span class="icon icon-sm" data-icon="list-checks"></span></span>
+            <p class="text-sm text-gray-700"><strong class="text-ink">10 preguntas por evaluación.</strong> Se aprueba con 8 y los reintentos son ilimitados.</p>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-info-bg text-primary"><span class="icon icon-sm" data-icon="award"></span></span>
+            <p class="text-sm text-gray-700"><strong class="text-ink">Un certificado al final.</strong> Se emite al aprobar los módulos de tu recorrido.</p>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Formulario -->
+      <div class="mx-auto flex w-full max-w-[400px] flex-col gap-6">
+        <a href="design-system.html" class="flex w-fit items-center gap-3 lg:hidden" aria-label="Academia SIGMMA">
+          <img src="assets/img/logo.svg" alt="SIGMMA" width="140" height="23" class="w-[140px]" />
+          <span class="h-6 w-px bg-line-strong" aria-hidden="true"></span>
+          <span class="text-h6 font-bold text-primary">Academia</span>
+        </a>
+
+        <div class="brand-edge rounded-xl p-8 shadow-glow">
+          <h2 class="text-h4">Ingresar</h2>
+          <p class="mt-1.5 text-sm text-ink-soft">Usá las mismas credenciales de sigmma.net.</p>
+
+          <!-- Error de credenciales (pantalla 01b). Se anuncia por aria-live y el
+               foco vuelve al campo contraseña. -->
+          <div class="alert alert-error mt-5" role="alert" id="login-error" hidden>
+            <span class="icon" data-icon="alert-triangle"></span>
+            <p>
+              Usuario o contraseña incorrectos. Probá de nuevo o resolvé tu acceso desde
+              <a href="https://sigmma.net" class="font-bold text-error-dark underline" target="_blank" rel="noopener">sigmma.net</a>.
+            </p>
+          </div>
+
+          <form class="mt-5 flex flex-col gap-4" id="login-form" novalidate>
+            <div class="field">
+              <label class="label" for="usuario">Usuario</label>
+              <input
+                class="input"
+                id="usuario"
+                name="usuario"
+                type="email"
+                autocomplete="username"
+                placeholder="usuario@agencia.com"
+                required
+              />
+            </div>
+            <div class="field">
+              <label class="label" for="password">Contraseña</label>
+              <input
+                class="input"
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+            <button class="btn btn-primary btn-lg btn-block mt-2" type="submit" id="login-submit">
+              Ingresar
+            </button>
+          </form>
+
+          <div class="divider my-6"></div>
+
+          <p class="text-xs text-ink-soft">
+            ¿No podés entrar?
+            <a href="#" class="font-bold text-primary underline" data-support-link>Escribinos por WhatsApp</a>
+            o resolvé tu acceso desde
+            <a href="https://sigmma.net" class="font-bold text-primary underline" target="_blank" rel="noopener">sigmma.net</a>.
+            La Academia no crea usuarios ni cambia contraseñas.
+          </p>
+        </div>
+
+        <p class="text-center text-xs text-ink-soft">
+          Prototipo con datos ficticios ·
+          <a href="design-system.html" class="underline">ver el sistema de diseño</a>
+        </p>
+      </div>
+    </main>
+
+    <script src="assets/js/mock-data.js"></script>
+    <script src="assets/js/icons.js"></script>
+    <script src="assets/js/ui.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        const form = document.getElementById("login-form");
+        const alerta = document.getElementById("login-error");
+        const usuario = document.getElementById("usuario");
+        const password = document.getElementById("password");
+        const submit = document.getElementById("login-submit");
+
+        /* Pantalla 01b: `?state=error` muestra el intento fallido tal como
+           quedaría después de enviar credenciales incorrectas. */
+        if (UI.param("state") === "error") {
+          usuario.value = ACADEMIA.usuario.email;
+          password.value = "unaclavecualquiera";
+          fallar();
+        } else {
+          usuario.value = ACADEMIA.usuario.email;
+        }
+
+        function fallar() {
+          alerta.hidden = false;
+          password.setAttribute("aria-invalid", "true");
+          password.setAttribute("aria-describedby", "login-error");
+          password.value = "";
+          password.focus();
+        }
+
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          alerta.hidden = true;
+          password.removeAttribute("aria-invalid");
+          UI.loading(submit, true);
+
+          /* En el producto la validación es server-side (SSO contra el
+             backoffice). Acá alcanza con simular la latencia. */
+          window.setTimeout(function () {
+            UI.loading(submit, false);
+            if (!usuario.value.trim() || !password.value.trim()) {
+              fallar();
+              return;
+            }
+            window.location.href = "modulos.html";
+          }, 700);
+        });
+      })();
+    </script>
+  </body>
+</html>
