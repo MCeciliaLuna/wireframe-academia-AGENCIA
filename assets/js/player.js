@@ -1,10 +1,35 @@
 /* ============================================================================
    Academia SIGMMA — reproductor simulado
    ----------------------------------------------------------------------------
-   En producción esto es la YouTube IFrame Player API: se escucha
-   `onStateChange`, se compara tiempo actual contra duración y se reporta el
-   avance al backend. Acá se simula el reloj para poder probar la mecánica que
-   define el producto: al cruzar el 80 % el video queda VISTO y no vuelve atrás.
+   Acá se simula el reloj para poder probar la mecánica que define el producto:
+   al cruzar el 80 % el video queda VISTO y no vuelve atrás.
+
+   ⚠ DECISIÓN ABIERTA — cómo se mide el 80 % (P04.3 del cotejo)
+   ----------------------------------------------------------------------------
+   Este prototipo marca "visto" comparando la POSICIÓN del cursor contra la
+   duración. Con eso, arrastrar la barra al final marca el video como visto en
+   un segundo. **No tomar esto como el criterio de producción**: es la opción
+   más simple para poder demostrar el umbral en una demo, no la decisión.
+
+   Las dos opciones sobre la mesa:
+
+     A · Posición máxima alcanzada (lo que hace este prototipo).
+         Simple. Se puede saltear el contenido entero, y la métrica de consumo
+         real del panel de seguimiento queda inservible.
+
+     B · Segundos efectivamente reproducidos.
+         Se acumulan solo los avances hacia adelante mientras el reproductor
+         está en PLAYING, y se descartan los saltos por encima de un umbral.
+         Es el anti-scrub.
+
+   La API de YouTube alcanza para B: no entrega "porcentaje visto", pero expone
+   `getCurrentTime()`, `getDuration()` y `onStateChange`, que es todo lo que hace
+   falta para acumular tiempo real de reproducción. O sea, la elección es de
+   producto —cuánto rigor se le pide a la métrica—, no una restricción técnica de
+   YouTube. Es la capa propia que el alcance funcional del MVP (§5) ya declara
+   como esfuerzo explícito de desarrollo.
+
+   Cuando se decida, el cambio es local: `pintar()` y `buscarDesdeEvento()`.
    ========================================================================== */
 
 window.Player = (function () {
@@ -33,6 +58,9 @@ window.Player = (function () {
     const tiempo = raiz.querySelector("[data-player-time]");
 
     function pintar() {
+      /* Opción A de la decisión abierta de arriba: el porcentaje es la posición,
+         no el tiempo reproducido. Si se adopta la opción B, este cálculo pasa a
+         leer un acumulador de segundos y `buscarDesdeEvento` deja de alimentarlo. */
       const pct = Math.min(100, (actual / duracion) * 100);
       relleno.style.width = pct + "%";
       scrub.setAttribute("aria-valuenow", Math.round(pct));

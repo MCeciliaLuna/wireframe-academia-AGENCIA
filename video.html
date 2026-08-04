@@ -52,7 +52,7 @@
           <ol class="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
             <li><a href="modulos.html" class="hover:underline">Módulos</a></li>
             <li aria-hidden="true" class="text-ink-muted">/</li>
-            <li><a href="modulo.html" class="hover:underline" data-modulo-link>Reservas aéreas</a></li>
+            <li><a href="modulo.html" class="hover:underline" data-modulo-link></a></li>
             <li aria-hidden="true" class="text-ink-muted">/</li>
             <li class="font-bold text-gray-800" aria-current="page" data-video-titulo></li>
           </ol>
@@ -181,7 +181,7 @@
             </div>
             <div id="lista-lateral" class="max-h-[420px] overflow-y-auto"></div>
             <div class="border-t border-line p-4">
-              <a class="btn btn-primary btn-sm btn-block" href="evaluacion.html">Hacer la evaluación</a>
+              <a class="btn btn-primary btn-sm btn-block" href="evaluacion.html" id="evaluacion-lateral">Hacer la evaluación</a>
             </div>
           </div>
         </aside>
@@ -195,27 +195,42 @@
     <script>
       (function () {
         "use strict";
-        const moduloId = Number(UI.param("m") || 3);
-        const videos = ACADEMIA.videosDelModulo();
-        const videoId = UI.param("v") || "m3-v3";
-        let indice = videos.findIndex(function (v) { return v.id === videoId; });
-        if (indice < 0) indice = 2;
+        /* El módulo puede venir en `?m=`, pero si solo viene `?v=` se deduce del
+           video: los IDs de video son permanentes y únicos (`BAK-M30.070`). */
+        const porVideo = ACADEMIA.moduloDeVideo(UI.param("v"));
+        const modulo = porVideo || UI.moduloDeLaUrl();
+        const moduloId = modulo.id;
+
+        /* Guarda de acceso: los videos de un módulo que la usuaria no puede
+           abrir no se reproducen ni se listan. */
+        if (UI.bloquearModulo(modulo)) return;
+
+        /* La navegación recorre solo los videos que el plan habilita. */
+        const videos = ACADEMIA.videosAplicables(moduloId);
+        let indice = videos.findIndex(function (v) { return v.id === UI.param("v"); });
+        if (indice < 0) {
+          /* Sin `?v=` válido: el primero que todavía no se vio, que es donde la
+             usuaria dejó el módulo. */
+          indice = videos.findIndex(function (v) { return !v.visto; });
+          if (indice < 0) indice = 0;
+        }
         const video = videos[indice];
+        const secciones = ACADEMIA.secciones(moduloId);
         const seccion = ACADEMIA.seccionDe(video.id);
-        const modulo = ACADEMIA.modulo(moduloId) || ACADEMIA.modulo(3);
 
         document.title = video.titulo + " · Academia SIGMMA";
         document.querySelectorAll("[data-video-titulo]").forEach(function (el) {
           el.textContent = video.titulo;
         });
         document.querySelector("[data-seccion-nombre]").textContent =
-          "Sección " + (ACADEMIA.secciones.indexOf(seccion) + 1) + " · " + seccion.titulo;
+          "Sección " + (secciones.indexOf(seccion) + 1) + " · " + seccion.titulo;
         document.querySelector("[data-video-indice]").textContent = indice + 1;
         document.querySelector("[data-video-total]").textContent = videos.length;
         document.querySelector("[data-video-duracion]").textContent = video.duracion;
         document.querySelector("[data-modulo-link]").textContent = modulo.titulo;
         document.querySelector("[data-modulo-link]").href = "modulo.html?m=" + moduloId;
         document.querySelector("[data-volver]").href = "modulo.html?m=" + moduloId;
+        document.getElementById("evaluacion-lateral").href = "evaluacion.html?m=" + moduloId;
 
         /* Navegación. En el primer video no hay anterior; en el último el CTA
            deja de ser "Siguiente" y pasa a ser la evaluación. El ícono de ojo
@@ -247,11 +262,22 @@
         const lista = document.getElementById("lista-lateral");
         function pintarLista() {
           let html = "";
-          ACADEMIA.secciones.forEach(function (s, i) {
+          secciones.forEach(function (s, i) {
             html +=
               '<p class="bg-surface-sunken px-4 py-2 text-2xs font-bold uppercase tracking-wider text-gray-700">Sección ' +
               (i + 1) + " · " + s.titulo + "</p>";
             s.videos.forEach(function (v) {
+              /* El video con plan propio se lista, para que el módulo se entienda
+                 completo, pero no es un link. */
+              if (!ACADEMIA.videoAplicable(v)) {
+                html +=
+                  '<div class="flex items-center gap-3 border-b border-line bg-surface px-4 py-2.5 text-xs text-ink-soft" aria-disabled="true">' +
+                  '<span class="icon icon-sm" data-icon="sparkles"></span>' +
+                  '<span class="min-w-0 flex-1 truncate">' + v.titulo + "</span>" +
+                  '<span class="shrink-0">Plan ' + v.planes[0] + "</span>" +
+                  "</div>";
+                return;
+              }
               const actual = v.id === video.id;
               const icono = v.visto
                 ? '<span class="icon icon-sm text-success" data-icon="check-circle"></span>'
@@ -272,7 +298,7 @@
           lista.innerHTML = html;
           renderIcons(lista);
           document.querySelector("[data-vistos-conteo]").textContent =
-            videos.filter(function (v) { return v.visto; }).length + " de " + videos.length;
+            ACADEMIA.vistosDelModulo(moduloId) + " de " + videos.length;
         }
         pintarLista();
 

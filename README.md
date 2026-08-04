@@ -1,11 +1,39 @@
 # Academia SIGMMA — prototipo de alta fidelidad (lado agencia)
 
-Implementación en HTML + Tailwind de las 16 pantallas del wireframe
+Implementación en HTML + Tailwind de las pantallas del wireframe
 `Academia SIGMMA - Wireframes.dc.html`, con el lenguaje visual real de sigmma.net descrito en
 [`ESTILOS-ACADEMIA.md`](./ESTILOS-ACADEMIA.md).
 
-Es un prototipo navegable con datos ficticios: **no hay backend, ni SSO, ni API, ni YouTube real**.
-Sirve como referencia de construcción para desarrollo y como pieza presentable a negocio.
+Es un prototipo navegable: **no hay backend, ni SSO, ni API, ni YouTube real**. Sirve como referencia
+de construcción para desarrollo y como pieza presentable a negocio.
+
+**El contenido es el real del mapa:** 11 módulos BAK, 31 secciones y 55 videos con su ID permanente
+`BAK-Mxx.yyy`, tomados del mapa de contenido (`Estrategia_Grabado_..._pareto_v2`) y agrupados en
+secciones según la Parte B del cotejo del wireframe. Son ficticias las personas, la agencia, las
+duraciones, las notas y los bancos de preguntas.
+
+### El recorrido de un vistazo
+
+| Módulo | Plan | Secciones | Videos |
+|---|---|---:|---:|
+| `BAK-M00` Fundamentos | Professional + Business | 2 | 4 |
+| `BAK-M10` File | Professional + Business | 3 | 6 |
+| `BAK-M20` Entidades: clientes, pasajeros y proveedores | Professional + Business | 3 | 6 |
+| `BAK-M30` Voucher / Servicios | Professional + Business | 4 | 7 |
+| `BAK-M40` Cobranzas / Recibos | Professional + Business | 3 | 5 |
+| `BAK-M50` Facturación | Professional + Business | 3 | 6 |
+| `BAK-M60` Pagos a proveedores | Professional + Business | 2 | 4 |
+| `BAK-M70` Caja y bancos | Professional + Business | 3 | 4 |
+| `BAK-M80` Informes | Professional + Business ¹ | 2 | 4 |
+| `BAK-M90` Contable | **Business** | 3 | 5 |
+| `BAK-M95` Receptivo operador | **Business** (nicho) | 3 | 4 |
+| | | **31** | **55** |
+
+¹ `BAK-M80.030` (Dashboard de KPIs) es el único video con plan propio: es Business dentro de un
+módulo que aplica a los dos planes.
+
+La usuaria del prototipo tiene plan **Professional**, así que su recorrido son **9 módulos**. Los
+otros dos se muestran igual, deshabilitados y con un aviso que nombra el plan que los incluye.
 
 ---
 
@@ -25,43 +53,55 @@ npm run serve    # servidor local en http://localhost:4321 (opcional)
 
 ---
 
-## Las 16 pantallas
+## Las pantallas
 
 Viven en 9 archivos: los estados transversales y los overlays se abren sobre su pantalla padre con
 un parámetro en la URL, igual que pasaría en el producto real.
 `design-system.html` tiene el índice completo enlazado.
+
+> **Antes de recorrer, abrí cualquier página con `?reset=1`** para volver al estado inicial:
+> `BAK-M00` y `BAK-M10` aprobados, `BAK-M20` en curso, el resto del recorrido bloqueado, y
+> `BAK-M90` / `BAK-M95` fuera del plan.
 
 | # | Pantalla | URL |
 |---|---|---|
 | 01 | Login | `index.html` |
 | 01b | Login con error de credenciales | `index.html?state=error` |
 | 02 | Listado de módulos | `modulos.html` |
-| 03 | Detalle de módulo (syllabus) | `modulo.html` |
-| 04 | Reproducción de video | `video.html` |
-| 05 | Evaluación — intro | `evaluacion.html` |
-| 06 | Evaluación — en curso | `evaluacion.html?phase=quiz` |
-| 07 | Resultado aprobado | `evaluacion.html?phase=result&score=9` |
-| 08 | Resultado desaprobado | `evaluacion.html?phase=result&score=6` |
-| 09 | Solicitud de Meet | `meet.html` · confirmación: `meet.html?state=sent` |
-| 10 | Mis certificaciones — en progreso | `certificaciones.html` |
-| 10b | Mis certificaciones — recorrido completo | `certificaciones.html?state=complete` |
-| 11 | Mi agencia | `agencia.html` |
+| 03 | Detalle de módulo (syllabus) | `modulo.html?m=20` |
+| 03b | Detalle de módulo aprobado | `modulo.html?m=0` |
+| 04 | Reproducción de video | `video.html?v=BAK-M20.030` |
+| 05 | Evaluación — intro | `evaluacion.html?m=20` |
+| 06 | Evaluación — en curso | `evaluacion.html?m=20&phase=quiz` |
+| 07 | Resultado aprobado | `evaluacion.html?m=20&phase=result&score=9` |
+| 08 | Resultado desaprobado | `evaluacion.html?m=20&phase=result&score=6` |
+| 09 | Solicitud de Meet | `meet.html?m=0` · confirmación: `&state=sent` |
+| 10 | Mi progreso y certificación | `certificaciones.html` |
+| 10b | Certificación — recorrido completo | `certificaciones.html?state=complete` |
+| 11 | Mi agencia | `agencia.html` · ranking: `?ver=ranking` |
 | 12a | Vacío — primera visita al listado | `modulos.html?state=empty` |
 | 12b | Vacío — agencia sin actividad | `agencia.html?state=empty` |
 | 12c | Error de carga del video | `video.html?state=error` |
 | 12d | Carga — skeleton del listado | `modulos.html?state=loading` |
 | 13 | Menú de avatar abierto | `modulos.html?menu=open` |
-| 14 | Variante «Meet ya solicitada» | `modulo.html?m=2&meet=solicitada` |
-| 15 | Confirmación con preguntas sin responder | `evaluacion.html?phase=quiz&confirm=1` |
+| 14 | Variante «Meet ya solicitada» | `modulo.html?m=10` |
+| 15 | Confirmación con preguntas sin responder | `evaluacion.html?m=20&phase=quiz&confirm=1` |
 | 16 | Sesión expirada (takeover) | cualquier página con `?state=expired` |
+| 17 | Guarda — bloqueado por secuencia | `modulo.html?m=50` · igual en `video` / `evaluacion` / `meet` |
+| 18 | Guarda — fuera del plan de la agencia | `modulo.html?m=90` · igual en las otras tres |
+| 19 | Meet todavía no habilitada | `meet.html?m=20` |
+| 20 | Meet de un módulo fuera de plan | `meet.html?m=90` |
+| 21 | Video con plan propio dentro del módulo | `modulo.html?m=80` (requiere haber avanzado) |
 
-También aceptan `?m=<1-10>` para cambiar de módulo y `?v=<id>` para cambiar de video.
+`?m=` es el número del módulo en el mapa (`0`, `10`, `20` … `95`), **no** su posición en el recorrido.
+`?v=` alcanza solo: el módulo se deduce del ID del video.
 
 ### Recorrido completo, sin tocar la URL
 
-Login → listado → módulo 03 → un video (dale play y cruzá el 80 %: el check del sidebar se
-actualiza solo) → evaluación → respondé → resultado → solicitar Meet → volver al módulo (ya dice
-«Meet solicitada el DD/MM») → certificaciones → mi agencia.
+Login → listado → módulo 03 (Entidades) → un video (dale play y cruzá el 80 %: el check del sidebar
+se actualiza solo) → evaluación → respondé → resultado → volver al listado (el módulo 04 ya está
+disponible) → certificaciones → mi agencia. En un módulo ya aprobado, el botón de Meet lleva a la
+solicitud y al volver la card dice «Meet solicitada el DD/MM».
 
 ---
 
@@ -78,7 +118,7 @@ actualiza solo) → evaluación → respondé → resultado → solicitar Meet �
 │   ├── fonts/                   Sofia Sans + Roboto (400/700), de web-2026
 │   ├── img/logo.svg             de web-2026
 │   └── js/
-│       ├── mock-data.js         módulos, videos, banco de preguntas, personas
+│       ├── mock-data.js         11 módulos con su syllabus, bancos, personas, reglas
 │       ├── icons.js             set de iconos, hidratados en el cliente
 │       ├── ui.js                modal, menú, tooltip, tablas, ?state=
 │       ├── quiz.js              máquina de estados de la evaluación
@@ -124,21 +164,94 @@ Tres colores del sistema actual no llegan a AA y se ajustaron:
   institucional (`#006fe0 → #003f7f`, 3.90:1). El celeste queda donde la guía dice que va: el borde
   de gradiente y los washes al 10 %.
 
-### Diferencias con el wireframe
+### Dos candados, no uno
+
+Hay **dos** reglas que deciden si un módulo se puede abrir, y dicen cosas distintas:
+
+- **Secuencia.** Un módulo se abre solo si el anterior **del recorrido** tiene la evaluación aprobada.
+  El aviso nombra el prerequisito y el CTA lleva al módulo donde sí hay algo que hacer (no al anterior,
+  que puede estar bloqueado también).
+- **Plan de la agencia.** Un módulo que el plan no incluye se muestra igual, deshabilitado, con un
+  aviso que nombra el plan que lo tiene y el canal de soporte. No hay nada que la usuaria pueda
+  resolver sola, así que «aprobá el anterior» acá no sirve. Estos módulos **no entran a la cadena de
+  desbloqueo ni a ninguna base de cálculo**: aprobar `BAK-M80` cierra el recorrido de una agencia
+  Professional, y `BAK-M90` nunca se habilita.
+
+Las dos están aplicadas de punta a punta, no solo escondiendo links:
+
+- En el listado y en la tabla de certificaciones, los módulos bloqueados **no son links**: el título
+  es texto plano y el motivo al lado, fuera del orden de tabulación.
+- Escribir `modulo.html?m=90` a mano tampoco entra: las **cuatro** pantallas que dan acceso a un
+  módulo —`modulo.html`, `video.html`, `evaluacion.html` y `meet.html`— tienen la guarda.
+- `meet.html` suma una precondición propia: la Meet existe solo para un módulo **aprobado**.
+- **Aprobar desbloquea de verdad.** Las aprobaciones se guardan en `localStorage`, así que si aprobás
+  `BAK-M20`, `BAK-M30` queda disponible en todas las pantallas. **`?reset=1` en cualquier página**
+  vuelve al estado inicial — conviene usarlo antes de una demo.
+
+El número que ve el usuario es la **posición en el recorrido** (1 a 9), nunca el id del módulo: los ids
+del mapa van de 10 en 10 y saltan. Un módulo fuera de plan no tiene posición, así que en su lugar lleva
+el ícono del plan.
+
+### Progreso: por usuario, agregado por agencia
+
+El avance y el desbloqueo son **por usuario**. `agencia.html` muestra el agregado, con la regla de
+agregación nombrada en la propia pantalla: promedio de módulos aprobados por persona sobre los del
+recorrido del plan. Toda base de cálculo son los **9 módulos del recorrido**, no los 11 del mapa.
+
+### Diferencias con el wireframe y con el cotejo
 
 - El wireframe dice «3 de 10 módulos aprobados» pero muestra dos cards aprobadas. Acá **todos los
-  números salen del mismo dato** (`mock-data.js`), así que el listado, el certificado y la vista de
-  agencia siempre coinciden: 2 de 10.
+  números salen del mismo dato**, así que el listado, el certificado y la vista de agencia siempre
+  coinciden.
+- El wireframe muestra un módulo como «Disponible» mientras el anterior está En curso, lo que
+  contradice su propia regla de desbloqueo. Acá arranca **bloqueado**: la regla no admite excepción.
+- El cotejo (P02.3) dice que un módulo que no aplica al perfil **no se muestra**. Acá se muestra
+  deshabilitado con aviso de plan: es una decisión tomada a propósito, porque además de pedagógica es
+  una superficie comercial. Como nada se oculta, tampoco hay huecos en la numeración.
+- Tres secciones **rompen el orden de ID** y está bien: `BAK-M40.S3` muestra `050` antes de `040`,
+  `BAK-M70.S1` muestra `030` después de `010`, y `BAK-M80.S2` muestra `040` antes de `030`. El
+  agrupamiento pedagógico manda sobre la secuencia del ID, y el ID nunca se mueve.
+- La nomenclatura de planes es la del **mapa de contenido** (Professional / Business). El alcance
+  funcional del MVP dice Corporate / Business / Standard: ese documento queda para corregir.
 - La notación de baja fidelidad (subrayado punteado = dato dinámico, recuadros `[placeholder]`,
   anotaciones amarillas) no se traslada: era instrumental al wireframe.
-- Solo el módulo 03 tiene syllabus cargado. Los demás lo reutilizan.
+
+### Decisiones abiertas
+
+Lo que el prototipo resuelve de una manera pero **todavía no está decidido**. La tabla completa está
+en `design-system.html`, sección «Decisiones abiertas». Las dos que más importan:
+
+- **Cómo se mide el 80 % de un video** (P04.3). El prototipo usa la posición del cursor, así que
+  arrastrar la barra al final marca el video como visto. **No es el criterio de producción.** La
+  alternativa es acumular segundos efectivamente reproducidos (anti-scrub). La IFrame API de YouTube
+  alcanza para eso —expone `getCurrentTime()`, `getDuration()` y `onStateChange`—, o sea que la
+  elección es de producto, no una restricción técnica.
+- **Los bancos de preguntas de `BAK-M40` a `BAK-M95`** no están escritos: son 50 preguntas por módulo
+  de trabajo de contenido. Mientras tanto esos módulos sortean sobre un banco de estructura, y la
+  antesala de la evaluación lo avisa. Escritos y reales: M00, M10, M20 y M30.
+
+Lo que quedó **cerrado por decisión** y por eso no está construido: el estado `vacío` /
+«Próximamente» (un módulo se publica solo con su syllabus completo, así que no puede pasar).
 
 ---
 
 ## Verificado
 
 - Compila con `@tailwindcss/cli` 4.3.3, sin errores.
-- Las 21 URLs de la tabla renderizan la pantalla correcta.
+- **11 módulos, 31 secciones, 55 videos**, con los títulos e IDs del mapa de contenido.
+- Los bancos: `subtema` es siempre una sección de su propio módulo, ninguna respuesta correcta cae
+  fuera de rango, ningún banco tiene 10 preguntas o menos, ningún enunciado se repite dentro de un
+  banco.
+- Las URLs de la tabla renderizan la pantalla correcta, verificadas cargando cada página en Chrome
+  headless y leyendo el DOM ya hidratado: los ordinales del listado van de 1 a 9 sin huecos, las dos
+  cards fuera de plan no tienen ordinal, las tres secciones que rompen el orden de ID lo muestran, el
+  video con plan propio se lista sin link, y aprobar el último módulo del recorrido cierra el
+  certificado sin ofrecer `BAK-M90`.
+- Las cuatro guardas de módulo cortan con el aviso correcto según el motivo (secuencia o plan), y
+  `meet.html` además exige módulo aprobado.
+- Todas las bases de cálculo son los 9 módulos del recorrido, coincidentes entre el listado, el
+  certificado y la vista de agencia.
+- Sin aritmética sobre el id del módulo y sin contadores de videos paralelos al syllabus.
 - Sin scroll horizontal en ninguna página a 375, 768 y 1024 px.
 - Un solo `<h1>` visible por pantalla y jerarquía de headings sin saltos.
 - Sin imágenes sin `alt`, sin botones o links sin nombre accesible, sin campos sin label, sin IDs

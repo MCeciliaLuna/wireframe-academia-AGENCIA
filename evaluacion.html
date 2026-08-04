@@ -55,6 +55,19 @@
             </li>
           </ul>
 
+          <!-- Aviso de prototipo: los módulos cuyo banco real todavía no está
+               escrito sortean sobre preguntas de estructura del módulo. Es
+               visible a propósito, para que nadie lea esas preguntas como el
+               contenido definitivo de la evaluación. -->
+          <div class="alert alert-info" id="intro-aviso-banco" hidden>
+            <span class="icon" data-icon="info"></span>
+            <p>
+              <strong>Banco de demostración.</strong> Las preguntas de este módulo todavía no están
+              cargadas: las que vas a ver son sobre la estructura del módulo, para poder recorrer la
+              evaluación.
+            </p>
+          </div>
+
           <p class="meta" id="intro-historial"></p>
 
           <div class="flex flex-wrap items-center gap-3">
@@ -183,16 +196,20 @@
     <script>
       (function () {
         "use strict";
-        const moduloId = Number(UI.param("m") || 3);
-        const modulo = ACADEMIA.modulo(moduloId) || ACADEMIA.modulo(3);
+        const modulo = UI.moduloDeLaUrl();
+        const moduloId = modulo.id;
+
+        /* Guarda de acceso: no se puede rendir la evaluación de un módulo que
+           todavía no está habilitado ni de uno que el plan no incluye. */
+        if (UI.bloquearModulo(modulo)) return;
+
         let intento = null;
 
         document.title = "Evaluación: " + modulo.titulo + " · Academia SIGMMA";
         document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
           el.textContent = modulo.titulo;
         });
-        document.querySelector("[data-modulo-eyebrow]").textContent =
-          "Módulo " + String(modulo.id).padStart(2, "0");
+        document.querySelector("[data-modulo-eyebrow]").textContent = ACADEMIA.rotulo(moduloId);
         ["salir", "volver-modulo", "r-revisar"].forEach(function (id) {
           const el = document.getElementById(id);
           if (el) el.href = "modulo.html?m=" + moduloId;
@@ -216,6 +233,7 @@
           const enCurso = Quiz.leer(moduloId);
           const historial = document.getElementById("intro-historial");
           const boton = document.getElementById("empezar");
+          document.getElementById("intro-aviso-banco").hidden = !modulo.bancoEstructural;
           if (enCurso) {
             historial.textContent =
               "Tenés un intento sin terminar, en la pregunta " +
@@ -363,7 +381,12 @@
         /* -- 07 / 08 · Resultado ------------------------------------------- */
         function terminar() {
           Quiz.descartar(moduloId);
-          pintarResultado(Quiz.corregir(intento));
+          const r = Quiz.corregir(intento);
+          /* Solo un intento realmente terminado deja el módulo aprobado y
+             habilita el siguiente. Los deep links de demostración
+             (?phase=result) no tocan el estado del prototipo. */
+          if (r.aprobado) ACADEMIA.registrarAprobacion(moduloId, r.correctas);
+          pintarResultado(r);
         }
 
         function pintarResultado(r) {
@@ -385,14 +408,20 @@
             document.getElementById("r-aprobado").hidden = false;
             document.getElementById("r-desaprobado").hidden = true;
 
-            const siguiente = ACADEMIA.modulo(modulo.id + 1);
-            const aprobados = Math.min(ACADEMIA.total(), ACADEMIA.aprobados() + 1);
+            const siguiente = ACADEMIA.siguienteModulo(moduloId);
+            /* Si el intento se terminó de verdad, el módulo ya quedó registrado
+               como aprobado; en el deep link de demostración todavía no. */
+            const yaContado = modulo.estado === "aprobado";
+            const aprobados = Math.min(
+              ACADEMIA.total(),
+              ACADEMIA.aprobados() + (yaContado ? 0 : 1)
+            );
             const pct = Math.round((aprobados / ACADEMIA.total()) * 100);
 
             if (siguiente) {
               document.getElementById("r-desbloqueo").innerHTML =
-                "Se desbloqueó el <strong>Módulo " +
-                String(siguiente.id).padStart(2, "0") + " · " + siguiente.titulo +
+                "Se desbloqueó el <strong>" + ACADEMIA.rotulo(siguiente.id) + " · " +
+                siguiente.titulo +
                 "</strong>. Ya podés empezarlo cuando quieras.";
               document.getElementById("r-siguiente-modulo").href = "modulo.html?m=" + siguiente.id;
             } else {

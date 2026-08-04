@@ -1263,6 +1263,16 @@
   .video-row[aria-current="true"] {
     background: var(--color-info-bg);
   }
+  /* Video que el plan de la agencia no habilita: se lista para que el módulo se
+     entienda completo, pero no es un link. Sin hover, porque no hay nada que
+     abrir. */
+  .video-row[aria-disabled="true"],
+  .video-row[aria-disabled="true"]:hover {
+    background: var(--color-surface);
+  }
+  .video-row[aria-disabled="true"] .video-thumb {
+    background: var(--color-line-strong);
+  }
   .video-thumb {
     flex: none;
     display: grid;

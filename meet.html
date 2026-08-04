@@ -131,8 +131,34 @@
     <script>
       (function () {
         "use strict";
-        const moduloId = Number(UI.param("m") || 3);
-        const modulo = ACADEMIA.modulo(moduloId) || ACADEMIA.modulo(3);
+        const modulo = UI.moduloDeLaUrl();
+        const moduloId = modulo.id;
+
+        /* Guarda de acceso: la Meet de un módulo que la usuaria no puede abrir
+           tampoco se puede pedir. Era la única de las cuatro pantallas de módulo
+           sin la guarda, y la URL es adivinable. */
+        if (UI.bloquearModulo(modulo)) return;
+
+        /* Precondición propia de esta pantalla: la Meet se habilita al aprobar
+           el módulo. Un módulo accesible pero todavía sin aprobar no bloquea el
+           acceso, pero no tiene Meet que pedir. */
+        if (modulo.estado !== "aprobado") {
+          UI.avisoPantalla({
+            title: "Meet no habilitada",
+            titulo: "Todavía no hay Meet para este módulo",
+            icono: "message",
+            texto:
+              "La reunión de 30 minutos con soporte se habilita cuando aprobás la evaluación de <strong>" +
+              modulo.titulo +
+              "</strong>. Es una por módulo aprobado.",
+            acciones:
+              '<a class="btn btn-primary" href="evaluacion.html?m=' + moduloId +
+              '">Hacer la evaluación</a>' +
+              '<a class="btn btn-bordered" href="modulo.html?m=' + moduloId +
+              '">Volver al módulo</a>',
+          });
+          return;
+        }
 
         document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
           el.textContent = modulo.titulo;

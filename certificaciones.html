@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mis certificaciones · Academia SIGMMA</title>
+    <title>Mi progreso y certificación · Academia SIGMMA</title>
     <meta name="description" content="Tu progreso y el certificado final del recorrido." />
     <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
@@ -50,8 +50,9 @@
       <div>
         <h1 class="text-h2">Mi progreso y certificación</h1>
         <p class="mt-2 max-w-2xl text-gray-700">
-          Recorrido del perfil <span class="font-bold" data-user-profile></span>. El certificado se
-          emite una sola vez, al aprobar todos los módulos: no hay certificados parciales.
+          Recorrido del plan <span class="font-bold" data-user-profile></span>. El certificado se
+          emite una sola vez, al aprobar todos los módulos de tu recorrido: no hay certificados
+          parciales.
         </p>
       </div>
 
@@ -145,7 +146,7 @@
           badge.innerHTML =
             '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Disponible</span>';
           texto.innerHTML =
-            "Completaste los <strong>" + total + " módulos</strong> del recorrido " +
+            "Completaste los <strong>" + total + " módulos</strong> del recorrido del plan " +
             ACADEMIA.usuario.perfil + ". Emitido el " + ACADEMIA.ahoraLargo().slice(0, 10) + ".";
           sello.className =
             "grid h-28 w-24 shrink-0 place-items-center rounded-lg text-white shadow-glow";
@@ -202,10 +203,16 @@
           puestoNota.hidden = true;
         }
 
-        /* Tabla informativa: cada fila lleva al detalle del módulo. */
-        document.getElementById("tabla-modulos").innerHTML = ACADEMIA.modulos
+        /* Tabla informativa. Las filas de módulos habilitados llevan al detalle;
+           las bloqueadas NO son link: el título queda como texto plano, fuera
+           del orden de tabulación. El desbloqueo lo decide ACADEMIA, no esta
+           pantalla. */
+        /* Solo los módulos DEL RECORRIDO: los que el plan de la agencia no
+           incluye no son parte de la certificación ni de su base de cálculo, así
+           que no tienen fila acá. El listado de módulos sí los muestra. */
+        document.getElementById("tabla-modulos").innerHTML = ACADEMIA.recorrido()
           .map(function (m) {
-            const esta = completo ? "aprobado" : m.estado;
+            const esta = completo ? "aprobado" : ACADEMIA.estadoEfectivo(m.id);
             let estadoHtml, nota, fecha;
             if (esta === "aprobado") {
               estadoHtml =
@@ -227,11 +234,31 @@
               nota = "—";
               fecha = "—";
             }
-            const apagada = esta === "bloqueado" || esta === "disponible";
+
+            const bloqueado = esta === "bloqueado";
+            const apagada = bloqueado || esta === "disponible";
+            const anterior = ACADEMIA.prerequisito(m.id);
+
+            /* Bloqueado: texto plano con candado y el prerequisito como título
+               accesible. Sin href, sin hover, sin foco. */
+            const titulo = bloqueado
+              ? '<span class="flex items-center gap-2 font-bold">' +
+                '<span class="icon icon-sm shrink-0 text-ink-muted" data-icon="lock"></span>' +
+                m.titulo +
+                "</span>" +
+                (anterior
+                  ? '<span class="meta mt-0.5 block">Se abre al aprobar el ' +
+                    ACADEMIA.rotulo(anterior.id).toLowerCase() + "</span>"
+                  : "")
+              : '<a href="modulo.html?m=' + m.id +
+                '" class="font-bold text-inherit hover:text-primary-light hover:underline">' +
+                m.titulo + "</a>";
+
             return (
-              "<tr" + (apagada ? ' data-muted="true"' : "") + ">" +
-              '<td class="text-ink-soft">' + String(m.id).padStart(2, "0") + "</td>" +
-              '<td><a href="modulo.html?m=' + m.id + '" class="font-bold text-inherit hover:text-primary-light hover:underline">' + m.titulo + "</a></td>" +
+              "<tr" + (apagada ? ' data-muted="true"' : "") +
+              (bloqueado ? ' aria-disabled="true"' : "") + ">" +
+              '<td class="text-ink-soft">' + String(ACADEMIA.posicion(m.id)).padStart(2, "0") + "</td>" +
+              "<td>" + titulo + "</td>" +
               "<td>" + estadoHtml + "</td>" +
               "<td>" + nota + "</td>" +
               '<td class="text-ink-soft">' + fecha + "</td>" +

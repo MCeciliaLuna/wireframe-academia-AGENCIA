@@ -274,6 +274,138 @@ window.UI = (function () {
     showModal(el);
   }
 
+  /* -- Módulo de la URL ----------------------------------------------------
+     Centraliza la lectura de `?m=`. Existe porque el primer módulo del mapa
+     tiene id 0 (`BAK-M00`): cualquier `Number(UI.param("m") || 30)` suelto en
+     una página lo trataría como ausente. Sin `?m=`, cae en el módulo donde la
+     usuaria tiene algo que hacer. */
+  function moduloDeLaUrl() {
+    const A = window.ACADEMIA;
+    if (!A) return null;
+    const crudo = param("m");
+    if (crudo !== null) {
+      const m = A.modulo(crudo);
+      if (m) return m;
+    }
+    return A.moduloActual() || A.recorrido()[0] || A.modulos[0];
+  }
+
+  /* -- Aviso a pantalla completa -------------------------------------------
+     Reemplaza el contenido de `main` por un placeholder-box. Es el patrón único
+     para "no hay nada que mostrar acá y este es el motivo": lo usan la guarda de
+     módulo y la precondición de la Meet. */
+  function avisoPantalla(aviso) {
+    const main = document.getElementById("contenido") || document.querySelector("main");
+    if (!main) return false;
+    if (aviso.title) document.title = aviso.title + " · Academia SIGMMA";
+    main.className = "container-app page";
+    main.innerHTML = [
+      '<div class="mx-auto w-full max-w-narrow">',
+      '  <div class="placeholder-box">',
+      '    <span class="placeholder-icon"><span class="icon icon-lg" data-icon="' +
+        (aviso.icono || "info") + '"></span></span>',
+      '    <h1 class="text-h3">' + aviso.titulo + "</h1>",
+      '    <p class="max-w-md text-gray-700">' + aviso.texto + "</p>",
+      aviso.nota ? '    <p class="max-w-md text-sm text-ink-soft">' + aviso.nota + "</p>" : "",
+      aviso.acciones
+        ? '    <div class="mt-2 flex flex-wrap justify-center gap-3">' + aviso.acciones + "</div>"
+        : "",
+      "  </div>",
+      "</div>",
+    ].join("");
+    if (window.renderIcons) window.renderIcons(main);
+    return true;
+  }
+
+  /* -- Módulo inaccesible --------------------------------------------------
+     Guarda de acceso: si alguien llega por URL a un módulo que no puede abrir,
+     se reemplaza el contenido de la página por el motivo. No alcanza con
+     esconder el link en el listado — la URL es adivinable.
+
+     Hay DOS motivos y no dicen lo mismo:
+       · `secuencia` — está en tu recorrido, pero falta aprobar el anterior.
+       · `plan`      — no es parte del plan de tu agencia. "Aprobá el anterior"
+                       acá no sirve: no hay nada que la usuaria pueda hacer sola,
+                       así que la salida es el canal de soporte.
+
+     Devuelve true si bloqueó, para que el controlador de la página corte. */
+  function bloquearModulo(modulo) {
+    const A = window.ACADEMIA;
+    if (!A || !modulo) return false;
+    const motivo = A.motivoBloqueo(modulo.id);
+    if (!motivo) return false;
+
+    /* Los rótulos del chrome que nombran el módulo se completan igual: la
+       guarda corta el controlador de la página antes de que los hidrate, y un
+       "Evaluación · " sin nada al lado se lee como algo roto. */
+    document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
+      el.textContent = modulo.titulo;
+    });
+
+    avisoPantalla(motivo === "plan" ? avisoPlan(A, modulo) : avisoSecuencia(A, modulo));
+    return true;
+  }
+
+  /* Bloqueo por secuencia: hay algo que hacer, y el CTA lleva ahí. */
+  function avisoSecuencia(A, modulo) {
+    const anterior = A.prerequisito(modulo.id);
+    /* El CTA no lleva al módulo inmediatamente anterior — ese puede estar
+       bloqueado también, y se rebota de pantalla en pantalla. Lleva al primer
+       módulo habilitado sin aprobar, que es donde hay algo que hacer. */
+    const retomar = A.moduloActual();
+    const rotulo = (A.rotulo(modulo.id) || "módulo").toLowerCase();
+    return {
+      title: "Módulo bloqueado",
+      icono: "lock",
+      titulo: "El " + rotulo + " todavía está bloqueado",
+      texto:
+        "Para abrir <strong>" + modulo.titulo +
+        "</strong> primero tenés que aprobar la evaluación del <strong>" +
+        (anterior ? (A.rotulo(anterior.id) || "").toLowerCase() : "módulo anterior") +
+        "</strong>. Los módulos se habilitan de a uno, en orden.",
+      nota: retomar
+        ? "Vas por el <strong>" + (A.rotulo(retomar.id) || "").toLowerCase() + " · " +
+          retomar.titulo + "</strong>."
+        : null,
+      acciones:
+        (retomar
+          ? '<a class="btn btn-primary" href="modulo.html?m=' + retomar.id +
+            '">Seguir con el ' + (A.rotulo(retomar.id) || "módulo").toLowerCase() + "</a>"
+          : "") +
+        '<a class="btn btn-bordered" href="modulos.html">Ver mi recorrido</a>',
+    };
+  }
+
+  /* Bloqueo por plan: no hay nada que la usuaria pueda resolver sola. El aviso
+     nombra el plan que sí lo incluye y ofrece el canal de soporte. No promete
+     nada sobre condiciones, plazos ni precios: eso no lo define la Academia. */
+  function avisoPlan(A, modulo) {
+    const plan = A.planDe(modulo.id);
+    const retomar = A.moduloActual();
+    const soporte = A.soporte && A.soporte.whatsapp;
+    return {
+      title: "Módulo del plan " + plan,
+      icono: "sparkles",
+      titulo: modulo.titulo + " es parte del plan " + plan,
+      texto:
+        "Este módulo no está incluido en el recorrido de tu agencia" +
+        (modulo.nicho ? ", porque cubre la operación de receptivo operador" : "") +
+        ". Si lo necesitás, escribinos y lo vemos.",
+      nota:
+        "Tu recorrido tiene <strong>" + A.total() +
+        " módulos</strong> y lo podés completar sin este.",
+      acciones:
+        (soporte
+          ? '<a class="btn btn-primary" href="' + soporte + '" target="_blank" rel="noopener">' +
+            '<span class="icon" data-icon="message"></span>Escribinos por WhatsApp</a>'
+          : "") +
+        (retomar
+          ? '<a class="btn btn-bordered" href="modulo.html?m=' + retomar.id +
+            '">Seguir con el ' + (A.rotulo(retomar.id) || "módulo").toLowerCase() + "</a>"
+          : '<a class="btn btn-bordered" href="modulos.html">Ver mi recorrido</a>'),
+    };
+  }
+
   /* -- Arranque ------------------------------------------------------------ */
   function init() {
     bindModals();
@@ -320,9 +452,12 @@ window.UI = (function () {
 
   return {
     param: param,
+    moduloDeLaUrl: moduloDeLaUrl,
     showModal: showModal,
     closeModal: closeModal,
     loading: loading,
     sessionExpired: sessionExpired,
+    avisoPantalla: avisoPantalla,
+    bloquearModulo: bloquearModulo,
   };
 })();

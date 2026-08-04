@@ -119,8 +119,12 @@
     <script>
       (function () {
         "use strict";
-        const id = Number(UI.param("m") || 3);
-        const m = ACADEMIA.modulo(id) || ACADEMIA.modulo(3);
+        const m = UI.moduloDeLaUrl();
+
+        /* Guarda de acceso: no se muestra nada del contenido de un módulo que la
+           usuaria no puede abrir, sea por secuencia o por plan. */
+        if (UI.bloquearModulo(m)) return;
+
         const aprobado = m.estado === "aprobado";
         const meetHecha = UI.param("meet") === "solicitada" || Boolean(m.meetSolicitada);
 
@@ -128,8 +132,7 @@
         document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
           el.textContent = m.titulo;
         });
-        document.querySelector("[data-modulo-eyebrow]").textContent =
-          "Módulo " + String(m.id).padStart(2, "0");
+        document.querySelector("[data-modulo-eyebrow]").textContent = ACADEMIA.rotulo(m.id);
         document.querySelector("[data-modulo-descripcion]").textContent =
           m.descripcion || m.resumen;
 
@@ -151,12 +154,13 @@
           }
         }
 
-        /* Syllabus. Solo el módulo 03 tiene contenido cargado en el prototipo;
-           los demás lo reutilizan, marcado como visto si el módulo está aprobado. */
-        const secciones = ACADEMIA.secciones;
-        const videos = ACADEMIA.videosDelModulo();
-        const vistos = aprobado ? videos.length : videos.filter(function (v) { return v.visto; }).length;
-        const pct = Math.round((vistos / videos.length) * 100);
+        /* Syllabus del módulo: cada módulo tiene el suyo, con sus secciones en
+           el orden del ABM. Los conteos se derivan de acá y no de un campo
+           aparte, así la card del listado y esta pantalla no pueden discrepar. */
+        const secciones = ACADEMIA.secciones(m.id);
+        const videos = ACADEMIA.videosAplicables(m.id);
+        const vistos = ACADEMIA.vistosDelModulo(m.id);
+        const pct = ACADEMIA.progresoModulo(m.id);
 
         document.querySelector("[data-videos-texto]").textContent =
           vistos + " de " + videos.length + " · " + pct + " %";
@@ -170,18 +174,29 @@
           document.getElementById("evaluacion-cta").classList.replace("btn-primary", "btn-bordered");
         }
 
-        function duracionSeccion(s) {
-          const seg = s.videos.reduce(function (a, v) { return a + v.segundos; }, 0);
-          return Math.round(seg / 60) + " min";
-        }
-
-        /* "3:40" (M:SS de mock-data.js) → "03:40 min". */
+        /* "3:40" (M:SS del syllabus) → "03:40 min". */
         function duracionVideo(d) {
           const partes = d.split(":");
           return partes[0].padStart(2, "0") + ":" + partes[1] + " min";
         }
 
         function fila(v) {
+          /* Un video con plan propio (el único es el dashboard de KPIs, que es
+             Business dentro de un módulo que aplica a los dos planes) se muestra
+             igual, pero no es un link: no hay nada que reproducir. */
+          if (!ACADEMIA.videoAplicable(v)) {
+            return (
+              '<div class="video-row" aria-disabled="true">' +
+              '<span class="icon text-ink-soft" data-icon="sparkles"></span>' +
+              '<span class="video-thumb"><span class="icon icon-sm" data-icon="sparkles"></span></span>' +
+              '<span class="min-w-0 flex-1 text-sm text-ink-soft">' + v.titulo + "</span>" +
+              '<span class="meta hidden shrink-0 md:block">' + duracionVideo(v.duracion) + "</span>" +
+              '<span class="badge badge-muted"><span class="icon icon-sm" data-icon="sparkles"></span>Plan ' +
+              v.planes[0] + "</span>" +
+              "</div>"
+            );
+          }
+
           const estaVisto = aprobado || v.visto;
           const enCurso = !estaVisto && v.progreso > 0;
           let icono, badge;
@@ -209,11 +224,15 @@
 
         document.getElementById("secciones").innerHTML = secciones
           .map(function (s, i) {
+            /* Progreso por sección además del progreso del módulo: sin esto, en
+               un módulo de 4 secciones no se ve dónde quedó el avance. */
+            const p = ACADEMIA.progresoSeccion(s, aprobado);
             return (
               '<section class="flex flex-col gap-3">' +
               '<div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">' +
               '<h2 class="text-h5">Sección ' + (i + 1) + " · " + s.titulo + "</h2>" +
-              '<span class="meta">' + s.videos.length + " videos · " + duracionSeccion(s) + "</span>" +
+              '<span class="meta">' + p.vistos + " de " + p.total + " vistos · " +
+              ACADEMIA.duracionSeccion(s) + "</span>" +
               "</div>" +
               '<div class="overflow-hidden rounded-xl border border-line">' +
               s.videos.map(fila).join("") +

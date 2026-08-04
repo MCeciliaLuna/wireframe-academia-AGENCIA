@@ -44,6 +44,7 @@
           <li><a class="nav-link w-full justify-start" href="#datos">Tablas y filas</a></li>
           <li><a class="nav-link w-full justify-start" href="#vacios">Vacío, error, carga</a></li>
           <li><a class="nav-link w-full justify-start" href="#movimiento">Movimiento</a></li>
+          <li><a class="nav-link w-full justify-start" href="#decisiones">Decisiones abiertas</a></li>
         </ul>
       </nav>
 
@@ -58,7 +59,7 @@
           </p>
           <div class="mt-6 flex flex-wrap gap-3">
             <a class="btn btn-primary" href="modulos.html">Ver el prototipo</a>
-            <a class="btn btn-bordered" href="#pantallas">Mapa de las 16 pantallas<span class="icon" data-icon="arrow-right"></span></a>
+            <a class="btn btn-bordered" href="#pantallas">Mapa de pantallas<span class="icon" data-icon="arrow-right"></span></a>
           </div>
         </div>
 
@@ -67,10 +68,23 @@
           <div>
             <h2 class="text-h3">Mapa de pantallas</h2>
             <p class="mt-2 max-w-2xl text-gray-700">
-              Las 16 pantallas del wireframe viven en 9 archivos: los estados transversales y los
+              Las pantallas del wireframe viven en 9 archivos: los estados transversales y los
               overlays se abren sobre su pantalla padre con un parámetro en la URL, igual que
               ocurriría en el producto real.
             </p>
+            <div class="alert alert-info mt-4 max-w-2xl">
+              <span class="icon" data-icon="info"></span>
+              <p>
+                <strong>Antes de recorrer, abrí <a class="font-bold underline" href="modulos.html?reset=1">modulos.html?reset=1</a></strong>
+                para volver al estado inicial: <span class="font-mono">BAK-M00</span> y
+                <span class="font-mono">BAK-M10</span> aprobados,
+                <span class="font-mono">BAK-M20</span> en curso, el resto del recorrido bloqueado, y
+                <span class="font-mono">BAK-M90</span> / <span class="font-mono">BAK-M95</span> fuera
+                del plan Professional. La fila 21 muestra la guarda de secuencia hasta que apruebes
+                los módulos anteriores: es el mismo comportamiento del producto, no un error del
+                enlace.
+              </p>
+            </div>
           </div>
 
           <div class="table-wrap">
@@ -87,15 +101,16 @@
                   <tr><td class="text-ink-soft">01</td><td><a href="index.html">Login</a></td><td class="meta font-mono">index.html</td></tr>
                   <tr><td class="text-ink-soft">01b</td><td><a href="index.html?state=error">Login con error de credenciales</a></td><td class="meta font-mono">index.html?state=error</td></tr>
                   <tr><td class="text-ink-soft">02</td><td><a href="modulos.html">Listado de módulos</a></td><td class="meta font-mono">modulos.html</td></tr>
-                  <tr><td class="text-ink-soft">03</td><td><a href="modulo.html">Detalle de módulo (syllabus)</a></td><td class="meta font-mono">modulo.html</td></tr>
-                  <tr><td class="text-ink-soft">04</td><td><a href="video.html">Reproducción de video</a></td><td class="meta font-mono">video.html</td></tr>
-                  <tr><td class="text-ink-soft">05</td><td><a href="evaluacion.html">Evaluación — intro</a></td><td class="meta font-mono">evaluacion.html</td></tr>
-                  <tr><td class="text-ink-soft">06</td><td><a href="evaluacion.html?phase=quiz">Evaluación — en curso</a></td><td class="meta font-mono">?phase=quiz</td></tr>
-                  <tr><td class="text-ink-soft">07</td><td><a href="evaluacion.html?phase=result&amp;score=9">Resultado aprobado</a></td><td class="meta font-mono">?phase=result&amp;score=9</td></tr>
-                  <tr><td class="text-ink-soft">08</td><td><a href="evaluacion.html?phase=result&amp;score=6">Resultado desaprobado</a></td><td class="meta font-mono">?phase=result&amp;score=6</td></tr>
-                  <tr><td class="text-ink-soft">09</td><td><a href="meet.html">Solicitud de Meet con soporte</a></td><td class="meta font-mono">meet.html</td></tr>
-                  <tr><td class="text-ink-soft">10</td><td><a href="certificaciones.html">Mis certificaciones — en progreso</a></td><td class="meta font-mono">certificaciones.html</td></tr>
-                  <tr><td class="text-ink-soft">10b</td><td><a href="certificaciones.html?state=complete">Mis certificaciones — recorrido completo</a></td><td class="meta font-mono">?state=complete</td></tr>
+                  <tr><td class="text-ink-soft">03</td><td><a href="modulo.html?m=20">Detalle de módulo (syllabus)</a></td><td class="meta font-mono">modulo.html?m=20</td></tr>
+                  <tr><td class="text-ink-soft">03b</td><td><a href="modulo.html?m=0">Detalle de módulo aprobado</a></td><td class="meta font-mono">modulo.html?m=0</td></tr>
+                  <tr><td class="text-ink-soft">04</td><td><a href="video.html?v=BAK-M20.030">Reproducción de video</a></td><td class="meta font-mono">video.html?v=BAK-M20.030</td></tr>
+                  <tr><td class="text-ink-soft">05</td><td><a href="evaluacion.html?m=20">Evaluación — intro</a></td><td class="meta font-mono">evaluacion.html?m=20</td></tr>
+                  <tr><td class="text-ink-soft">06</td><td><a href="evaluacion.html?m=20&amp;phase=quiz">Evaluación — en curso</a></td><td class="meta font-mono">?phase=quiz</td></tr>
+                  <tr><td class="text-ink-soft">07</td><td><a href="evaluacion.html?m=20&amp;phase=result&amp;score=9">Resultado aprobado</a></td><td class="meta font-mono">?phase=result&amp;score=9</td></tr>
+                  <tr><td class="text-ink-soft">08</td><td><a href="evaluacion.html?m=20&amp;phase=result&amp;score=6">Resultado desaprobado</a></td><td class="meta font-mono">?phase=result&amp;score=6</td></tr>
+                  <tr><td class="text-ink-soft">09</td><td><a href="meet.html?m=0">Solicitud de Meet con soporte</a></td><td class="meta font-mono">meet.html?m=0</td></tr>
+                  <tr><td class="text-ink-soft">10</td><td><a href="certificaciones.html">Mi progreso y certificación</a></td><td class="meta font-mono">certificaciones.html</td></tr>
+                  <tr><td class="text-ink-soft">10b</td><td><a href="certificaciones.html?state=complete">Certificación — recorrido completo</a></td><td class="meta font-mono">?state=complete</td></tr>
                   <tr><td class="text-ink-soft">11</td><td><a href="agencia.html">Mi agencia</a></td><td class="meta font-mono">agencia.html</td></tr>
                   <tr><td class="text-ink-soft">11b</td><td><a href="agencia.html?ver=ranking">Mi agencia — ranking del equipo</a></td><td class="meta font-mono">agencia.html?ver=ranking</td></tr>
                   <tr><td class="text-ink-soft">12a</td><td><a href="modulos.html?state=empty">Vacío — primera visita al listado</a></td><td class="meta font-mono">modulos.html?state=empty</td></tr>
@@ -103,9 +118,14 @@
                   <tr><td class="text-ink-soft">12c</td><td><a href="video.html?state=error">Error de carga del video</a></td><td class="meta font-mono">video.html?state=error</td></tr>
                   <tr><td class="text-ink-soft">12d</td><td><a href="modulos.html?state=loading">Carga — skeleton del listado</a></td><td class="meta font-mono">modulos.html?state=loading</td></tr>
                   <tr><td class="text-ink-soft">13</td><td><a href="modulos.html?menu=open">Menú de avatar abierto</a></td><td class="meta font-mono">modulos.html?menu=open</td></tr>
-                  <tr><td class="text-ink-soft">14</td><td><a href="modulo.html?meet=solicitada">Variante «Meet ya solicitada»</a></td><td class="meta font-mono">modulo.html?meet=solicitada</td></tr>
-                  <tr><td class="text-ink-soft">15</td><td><a href="evaluacion.html?phase=quiz&amp;confirm=1">Confirmación con preguntas sin responder</a></td><td class="meta font-mono">?phase=quiz&amp;confirm=1</td></tr>
+                  <tr><td class="text-ink-soft">14</td><td><a href="modulo.html?m=10">Variante «Meet ya solicitada»</a></td><td class="meta font-mono">modulo.html?m=10</td></tr>
+                  <tr><td class="text-ink-soft">15</td><td><a href="evaluacion.html?m=20&amp;phase=quiz&amp;confirm=1">Confirmación con preguntas sin responder</a></td><td class="meta font-mono">?phase=quiz&amp;confirm=1</td></tr>
                   <tr><td class="text-ink-soft">16</td><td><a href="modulos.html?state=expired">Sesión expirada (takeover)</a></td><td class="meta font-mono">?state=expired</td></tr>
+                  <tr><td class="text-ink-soft">17</td><td><a href="modulo.html?m=50">Guarda — módulo bloqueado por secuencia</a></td><td class="meta font-mono">modulo.html?m=50</td></tr>
+                  <tr><td class="text-ink-soft">18</td><td><a href="modulo.html?m=90">Guarda — módulo fuera del plan de la agencia</a></td><td class="meta font-mono">modulo.html?m=90</td></tr>
+                  <tr><td class="text-ink-soft">19</td><td><a href="meet.html?m=20">Meet todavía no habilitada (módulo sin aprobar)</a></td><td class="meta font-mono">meet.html?m=20</td></tr>
+                  <tr><td class="text-ink-soft">20</td><td><a href="meet.html?m=90">Meet de un módulo fuera de plan</a></td><td class="meta font-mono">meet.html?m=90</td></tr>
+                  <tr><td class="text-ink-soft">21</td><td><a href="modulo.html?m=80">Video con plan propio dentro del módulo</a></td><td class="meta font-mono">modulo.html?m=80</td></tr>
                 </tbody>
               </table>
             </div>
@@ -221,11 +241,11 @@
             </p>
           </div>
           <div class="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface">
-            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h1 · 40 → 48</span><span class="text-h1">Reservas aéreas</span></div>
-            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h2 · 28 → 36</span><span class="text-h2">Reservas aéreas</span></div>
-            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h3 · 22 → 28</span><span class="text-h3">Reservas aéreas</span></div>
-            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h4 · 18 → 22</span><span class="text-h4">Reservas aéreas</span></div>
-            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h5 · 16 → 18</span><span class="text-h5">Reservas aéreas</span></div>
+            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h1 · 40 → 48</span><span class="text-h1">Voucher / Servicios</span></div>
+            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h2 · 28 → 36</span><span class="text-h2">Voucher / Servicios</span></div>
+            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h3 · 22 → 28</span><span class="text-h3">Voucher / Servicios</span></div>
+            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h4 · 18 → 22</span><span class="text-h4">Voucher / Servicios</span></div>
+            <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">h5 · 16 → 18</span><span class="text-h5">Voucher / Servicios</span></div>
             <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">lg · 18</span><span class="text-lg">Cotización, emisión y modificación de reservas de vuelos.</span></div>
             <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">base · 16</span><span class="text-base">Cotización, emisión y modificación de reservas de vuelos.</span></div>
             <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">sm · 14</span><span class="text-sm">Cotización, emisión y modificación de reservas de vuelos.</span></div>
@@ -379,6 +399,13 @@
               azul + wash celeste al 10 % + título en azul, sin elevación ni escala. No hereda el
               alto mínimo de 382 px ni el bloque de imagen: un módulo no tiene portada.
             </p>
+            <p class="mt-3 max-w-2xl text-gray-700">
+              El número es la <strong>posición en el recorrido</strong>, nunca el id del módulo: los
+              ids del mapa de contenido van de 10 en 10 y saltan (<span class="font-mono">BAK-M95</span>
+              sigue a <span class="font-mono">BAK-M90</span>). Un módulo que el plan de la agencia no
+              incluye no tiene posición —no es parte de tu recorrido—, así que en su lugar lleva el
+              ícono del plan.
+            </p>
           </div>
           <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             <!-- Aprobado -->
@@ -394,10 +421,10 @@
                 </div>
               </div>
               <div class="flex flex-1 flex-col gap-2">
-                <h3 class="card-title clamp-2"><a href="modulo.html" class="text-inherit">Introducción al ERP</a></h3>
-                <p class="text-xs text-ink-soft">Panorama general del sistema, navegación y conceptos base.</p>
+                <h3 class="card-title clamp-2"><a href="modulo.html?m=0" class="text-inherit">Fundamentos</a></h3>
+                <p class="text-xs text-ink-soft">Qué es SIGMMA, cómo piensa el sistema y cómo moverse por él.</p>
               </div>
-              <div class="text-xs text-ink-soft">6 videos</div>
+              <div class="text-xs text-ink-soft">4 videos · 2 secciones</div>
               <button class="btn btn-bordered btn-sm btn-block" type="button">Rehacer evaluación</button>
             </article>
 
@@ -411,14 +438,14 @@
                 <span class="badge badge-info"><span class="icon icon-sm" data-icon="play"></span>En curso</span>
               </div>
               <div class="flex flex-1 flex-col gap-2">
-                <h3 class="card-title clamp-2">Reservas aéreas</h3>
-                <p class="text-xs text-ink-soft">Cotización, emisión y modificación de reservas de vuelos.</p>
+                <h3 class="card-title clamp-2">Entidades: clientes, pasajeros y proveedores</h3>
+                <p class="text-xs text-ink-soft">Quién es quién en el sistema y cómo se cargan las tres entidades.</p>
               </div>
               <div class="flex flex-col gap-1.5">
-                <div class="flex justify-between text-xs text-ink-soft"><span>5 vistos</span><span>8 videos</span></div>
-                <div class="progress progress-sm"><span style="width: 62%"></span></div>
+                <div class="flex justify-between text-xs text-ink-soft"><span>2 vistos</span><span>6 videos · 3 secciones</span></div>
+                <div class="progress progress-sm"><span style="width: 33%"></span></div>
               </div>
-              <a class="btn btn-primary btn-sm btn-block" href="modulo.html">Continuar</a>
+              <a class="btn btn-primary btn-sm btn-block" href="modulo.html?m=20">Continuar</a>
             </article>
 
             <!-- Disponible -->
@@ -431,14 +458,14 @@
                 <span class="badge badge-neutral">Disponible</span>
               </div>
               <div class="flex flex-1 flex-col gap-2">
-                <h3 class="card-title clamp-2">Paquetes y armado de viajes</h3>
-                <p class="text-xs text-ink-soft">Cómo componer paquetes, márgenes y condiciones comerciales.</p>
+                <h3 class="card-title clamp-2">Voucher / Servicios</h3>
+                <p class="text-xs text-ink-soft">El corazón operativo: cargar, valorizar y procesar los servicios.</p>
               </div>
-              <div class="text-xs text-ink-soft">7 videos</div>
-              <a class="btn btn-primary btn-sm btn-block" href="modulo.html">Empezar módulo</a>
+              <div class="text-xs text-ink-soft">7 videos · 4 secciones</div>
+              <a class="btn btn-primary btn-sm btn-block" href="modulo.html?m=30">Empezar módulo</a>
             </article>
 
-            <!-- Bloqueado -->
+            <!-- Bloqueado por secuencia -->
             <article class="card card-locked relative flex flex-col gap-3 has-tooltip" aria-disabled="true">
               <div class="flex items-start justify-between gap-3">
                 <div class="leading-none">
@@ -448,12 +475,33 @@
                 <span class="badge badge-muted"><span class="icon icon-sm" data-icon="lock"></span>Bloqueado</span>
               </div>
               <div class="flex flex-1 flex-col gap-2">
-                <h3 class="card-title clamp-2">Facturación y cobranzas</h3>
-                <p class="text-xs text-ink-soft">Emisión de comprobantes, pagos parciales y conciliación.</p>
+                <h3 class="card-title clamp-2">Cobranzas / Recibos</h3>
+                <p class="text-xs text-ink-soft">Emitir el recibo, registrar los valores y leer la cuenta corriente.</p>
               </div>
-              <div class="text-xs text-ink-soft">5 videos</div>
+              <div class="text-xs text-ink-soft">5 videos · 3 secciones</div>
               <span class="btn btn-sm btn-block" aria-disabled="true">Bloqueado</span>
               <span class="tooltip" role="tooltip">Aprobá el módulo 04 para desbloquear</span>
+            </article>
+
+            <!-- Fuera del plan de la agencia. Mismo tratamiento visual que el
+                 bloqueo por secuencia, pero se distingue en tres puntos: sin
+                 posición, ícono e ícono de badge propios, y el aviso apunta al
+                 canal de soporte en vez de a un prerequisito. -->
+            <article class="card card-locked relative flex flex-col gap-3 has-tooltip" aria-disabled="true">
+              <div class="flex items-start justify-between gap-3">
+                <div class="leading-none">
+                  <span class="grid h-9 w-9 place-items-center text-ink-soft"><span class="icon icon-lg" data-icon="sparkles"></span></span>
+                  <span class="block text-2xs font-bold uppercase tracking-wide text-ink-soft">módulo</span>
+                </div>
+                <span class="badge badge-muted"><span class="icon icon-sm" data-icon="sparkles"></span>Plan Business</span>
+              </div>
+              <div class="flex flex-1 flex-col gap-2">
+                <h3 class="card-title clamp-2">Contable</h3>
+                <p class="text-xs text-ink-soft">Plan de cuentas, libros, balances y cierre de ejercicio.</p>
+              </div>
+              <div class="text-xs text-ink-soft">5 videos · 3 secciones</div>
+              <span class="btn btn-sm btn-block" aria-disabled="true">No incluido en tu plan</span>
+              <span class="tooltip" role="tooltip">Es parte del plan Business. Si tu agencia lo necesita, escribinos.</span>
             </article>
           </div>
         </section>
@@ -559,13 +607,13 @@
                 <p class="error-text" id="ds-2-error"><span class="icon icon-sm" data-icon="alert-circle"></span>Usuario o contraseña incorrectos.</p>
               </div>
               <div class="field">
-                <label class="label" for="ds-3">Perfil de la agencia <span class="label-optional">(solo lectura)</span></label>
-                <input class="input" id="ds-3" type="text" value="Corporate" readonly />
+                <label class="label" for="ds-3">Plan de la agencia <span class="label-optional">(solo lectura)</span></label>
+                <input class="input" id="ds-3" type="text" value="Professional" readonly />
               </div>
               <div class="field">
                 <label class="label" for="ds-4">Módulo <span class="label-optional">(deshabilitado)</span></label>
                 <select class="select" id="ds-4" disabled>
-                  <option>Reservas aéreas</option>
+                  <option>Voucher / Servicios</option>
                 </select>
               </div>
               <div class="field">
@@ -618,7 +666,7 @@
           <h2 class="text-h3">Avisos y modal</h2>
           <div class="grid gap-3 md:grid-cols-2">
             <div class="alert alert-error" role="alert"><span class="icon" data-icon="alert-triangle"></span><p>Usuario o contraseña incorrectos. Probá de nuevo o resolvé tu acceso desde sigmma.net.</p></div>
-            <div class="alert alert-success"><span class="icon" data-icon="unlock"></span><p>Se desbloqueó el <strong>Módulo 04 · Paquetes y armado de viajes</strong>.</p></div>
+            <div class="alert alert-success"><span class="icon" data-icon="unlock"></span><p>Se desbloqueó el <strong>Módulo 04 · Voucher / Servicios</strong>.</p></div>
             <div class="alert alert-info"><span class="icon" data-icon="info"></span><p>La evaluación está siempre disponible: no hace falta ver todos los videos.</p></div>
             <div class="alert alert-warning"><span class="icon" data-icon="alert-circle"></span><p>Quedaron <strong>3 preguntas sin responder</strong>. Si terminás ahora, se cuentan como incorrectas.</p></div>
           </div>
@@ -694,9 +742,9 @@
                   <tr><th style="width: 64px">#</th><th>Módulo</th><th style="width: 150px">Estado</th><th style="width: 90px">Nota</th><th style="width: 130px">Fecha</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td class="text-ink-soft">01</td><td>Introducción al ERP</td><td><span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobado</span></td><td>9/10</td><td class="text-ink-soft">02/06/2026</td></tr>
-                  <tr><td class="text-ink-soft">03</td><td>Reservas aéreas</td><td><span class="badge badge-info"><span class="icon icon-sm" data-icon="play"></span>En curso</span></td><td class="text-ink-soft">—</td><td class="text-ink-soft">—</td></tr>
-                  <tr data-muted="true"><td>05</td><td>Facturación y cobranzas</td><td><span class="badge badge-muted"><span class="icon icon-sm" data-icon="lock"></span>Bloqueado</span></td><td>—</td><td>—</td></tr>
+                  <tr><td class="text-ink-soft">01</td><td>Fundamentos</td><td><span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobado</span></td><td>9/10</td><td class="text-ink-soft">02/06/2026</td></tr>
+                  <tr><td class="text-ink-soft">03</td><td>Entidades: clientes, pasajeros y proveedores</td><td><span class="badge badge-info"><span class="icon icon-sm" data-icon="play"></span>En curso</span></td><td class="text-ink-soft">—</td><td class="text-ink-soft">—</td></tr>
+                  <tr data-muted="true"><td>05</td><td>Cobranzas / Recibos</td><td><span class="badge badge-muted"><span class="icon icon-sm" data-icon="lock"></span>Bloqueado</span></td><td>—</td><td>—</td></tr>
                 </tbody>
               </table>
             </div>
@@ -801,11 +849,68 @@
           </div>
         </section>
 
+        <!-- ══════════ DECISIONES ABIERTAS ══════════ -->
+        <section id="decisiones" class="flex flex-col gap-5">
+          <div>
+            <h2 class="text-h3">Decisiones abiertas</h2>
+            <p class="mt-2 max-w-2xl text-gray-700">
+              Lo que el prototipo resuelve de una manera pero todavía no está decidido. Está acá para
+              que nadie lo lea como definición de producto.
+            </p>
+          </div>
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table class="table-app">
+                <thead>
+                  <tr>
+                    <th style="width: 80px">Caso</th>
+                    <th>Qué está sin decidir</th>
+                    <th>Qué hace el prototipo mientras tanto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="text-ink-soft">P04.3</td>
+                    <td><strong>Cómo se mide el 80 %</strong> de un video: posición máxima alcanzada o segundos efectivamente reproducidos (anti-scrub).</td>
+                    <td class="text-ink-soft">Usa la posición. Arrastrar la barra al final marca el video como visto. La API de YouTube alcanza para el criterio estricto: es decisión de producto, no límite técnico.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">C-1</td>
+                    <td><strong>Plan a nivel video</strong>. El alcance funcional pone el plan en el módulo; <span class="font-mono">BAK-M80.030</span> es el único video con plan propio.</td>
+                    <td class="text-ink-soft">Le aplica la misma regla que al módulo: se lista con su aviso de plan y no cuenta para el progreso.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">C-5</td>
+                    <td><strong>Bancos de preguntas</strong> de <span class="font-mono">BAK-M40</span> a <span class="font-mono">BAK-M95</span>: son 50 preguntas por módulo de trabajo de contenido.</td>
+                    <td class="text-ink-soft">Sortea sobre un banco de estructura del módulo, avisado en la antesala. Escrito y real: M00, M10, M20 y M30.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">P05.4</td>
+                    <td><strong>Rehacer una evaluación aprobada</strong>: ¿la nota nueva reemplaza o se guarda el mejor intento?</td>
+                    <td class="text-ink-soft">Gana la última nota aprobada, y desaprobar después no revoca la aprobación.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">P06.1</td>
+                    <td><strong>Navegación del intento</strong>: libre con revisión final, o lineal.</td>
+                    <td class="text-ink-soft">Se puede volver atrás, pero para avanzar hay que responder la pregunta actual.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">P07.6</td>
+                    <td><strong>Mostrar las respuestas correctas</strong> al aprobar.</td>
+                    <td class="text-ink-soft">No las muestra. Al desaprobar tampoco: solo marca la elegida y el sub-tema.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <footer class="border-t border-line pt-8">
           <p class="text-sm text-ink-soft">
             Prototipo de alta fidelidad. Datos ficticios. Lenguaje visual derivado de
             <span class="font-bold">ESTILOS-ACADEMIA.md</span> y del repo
-            <span class="font-mono">web-2026</span>.
+            <span class="font-mono">web-2026</span>. Módulos, secciones y videos del mapa de contenido
+            <span class="font-mono">Estrategia_Grabado_Academia_SIGMMA_mapa_pareto_v2</span>.
           </p>
         </footer>
       </main>

@@ -61,7 +61,7 @@
             <span class="text-ink-soft"><span data-progreso-texto></span></span>
           </div>
           <div class="progress"><span data-progreso-barra style="width: 0%"></span></div>
-          <p class="meta">Perfil <span class="font-bold" data-user-profile></span> · <span data-total-modulos></span> módulos</p>
+          <p class="meta">Plan <span class="font-bold" data-user-profile></span> · <span data-total-modulos></span> módulos en tu recorrido</p>
         </div>
         <div class="flex w-full flex-col gap-2 lg:w-[340px]" id="skeleton-progreso" hidden aria-hidden="true">
           <div class="flex justify-between"><span class="skeleton h-3.5 w-28"></span><span class="skeleton h-3.5 w-36"></span></div>
@@ -90,7 +90,7 @@
           Empezá por el primero. Cada módulo tiene videos cortos y una evaluación al final; no hace
           falta ver todo para rendir.
         </p>
-        <a class="btn btn-primary mt-2" href="modulo.html">Empezar por el módulo 01</a>
+        <a class="btn btn-primary mt-2" href="modulo.html" id="vacio-cta">Empezar el recorrido</a>
       </div>
 
       <div id="grilla" class="grid gap-5 md:grid-cols-2 lg:grid-cols-3"></div>
@@ -120,6 +120,8 @@
         document.querySelector("[data-progreso-barra]").style.width = pct + "%";
 
         function badge(m) {
+          if (m.estado === "plan")
+            return '<span class="badge badge-muted"><span class="icon icon-sm" data-icon="sparkles"></span>Plan ' + ACADEMIA.planDe(m.id) + "</span>";
           if (m.estado === "aprobado")
             return '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobado</span>';
           if (m.estado === "en-progreso")
@@ -137,7 +139,16 @@
           return "";
         }
 
-        function card(m, indice) {
+        /* "6 videos · 3 secciones", derivado del syllabus del módulo. No hay
+           contadores cargados a mano: la card y el detalle leen del mismo lado. */
+        function conteo(m) {
+          const videos = ACADEMIA.videosAplicables(m.id).length;
+          const secciones = ACADEMIA.secciones(m.id).length;
+          return videos + " videos · " + secciones + " secciones";
+        }
+
+        function card(m) {
+          const fueraDePlan = m.estado === "plan";
           const bloqueado = m.estado === "bloqueado";
           const activo = m.estado === "en-progreso";
           const aprobado = m.estado === "aprobado";
@@ -145,11 +156,20 @@
 
           let clase = "card flex flex-col gap-3";
           if (activo) clase += " card-active";
-          else if (bloqueado) clase += " card-locked relative has-tooltip";
+          else if (bloqueado || fueraDePlan) clase += " card-locked relative has-tooltip";
           else clase += " card-interactive";
 
           let pie = "";
-          if (aprobado) {
+          if (fueraDePlan) {
+            /* No es parte del recorrido de la agencia: no hay progreso que
+               mostrar ni evaluación que rendir. El aviso va en el tooltip, y el
+               detalle completo está en modulo.html para quien llegue por URL. */
+            pie =
+              '<div class="text-xs text-ink-soft">' + conteo(m) + "</div>" +
+              '<span class="btn btn-sm btn-block" aria-disabled="true">No incluido en tu plan</span>' +
+              '<span class="tooltip" role="tooltip">Es parte del plan ' + ACADEMIA.planDe(m.id) +
+              ". Si tu agencia lo necesita, escribinos.</span>";
+          } else if (aprobado) {
             /* Meet solicitada (pantalla 14a) va en la misma línea que la
                métrica de videos, nunca debajo del botón: así el CTA siempre
                cae al fondo de la card, sin importar qué avisos secundarios
@@ -157,41 +177,58 @@
                orden de tabulación. */
             pie =
               '<div class="flex items-center justify-between gap-2 text-xs text-ink-soft">' +
-              "<span>" + m.videos + " videos</span>" +
+              "<span>" + conteo(m) + "</span>" +
               (m.meetSolicitada
                 ? '<span class="flex items-center gap-1"><span class="icon icon-sm text-success" data-icon="check"></span>Meet solicitada el ' + m.meetSolicitada + "</span>"
                 : "") +
               "</div>" +
               '<a class="btn btn-bordered btn-sm btn-block" href="evaluacion.html?m=' + m.id + '">Rehacer evaluación</a>';
           } else if (activo) {
-            const avance = Math.round((m.vistos / m.videos) * 100);
+            const vistos = m.vistos;
+            const videos = ACADEMIA.videosAplicables(m.id).length;
+            const avance = Math.round((vistos / videos) * 100);
             pie =
               '<div class="flex flex-col gap-1.5">' +
-              '<div class="flex justify-between text-xs text-ink-soft"><span>' + m.vistos + " vistos</span><span>" + m.videos + " videos</span></div>" +
+              '<div class="flex justify-between text-xs text-ink-soft"><span>' + vistos + " vistos</span><span>" + conteo(m) + "</span></div>" +
               '<div class="progress progress-sm"><span style="width:' + avance + '%"></span></div>' +
               "</div>" +
               '<a class="btn btn-primary btn-sm btn-block" href="' + href + '">Continuar</a>';
           } else if (bloqueado) {
+            /* El prerequisito real es el módulo anterior DEL RECORRIDO, no la
+               posición en la grilla: los módulos fuera de plan se muestran pero
+               no cuentan como prerequisito de nada. */
+            const anterior = ACADEMIA.prerequisito(m.id);
             pie =
-              '<div class="text-xs text-ink-soft">' + m.videos + " videos</div>" +
+              '<div class="text-xs text-ink-soft">' + conteo(m) + "</div>" +
               '<span class="btn btn-sm btn-block" aria-disabled="true">Bloqueado</span>' +
-              '<span class="tooltip" role="tooltip">Aprobá el módulo ' +
-              String(indice).padStart(2, "0") + " para desbloquear</span>";
+              '<span class="tooltip" role="tooltip">' +
+              (anterior
+                ? "Aprobá el " + ACADEMIA.rotulo(anterior.id).toLowerCase() + " para desbloquear"
+                : "Todavía no está habilitado") +
+              "</span>";
           } else {
             pie =
-              '<div class="text-xs text-ink-soft">' + m.videos + " videos</div>" +
+              '<div class="text-xs text-ink-soft">' + conteo(m) + "</div>" +
               '<a class="btn btn-primary btn-sm btn-block" href="' + href + '">Empezar módulo</a>';
           }
 
-          const titulo = bloqueado
+          const inerte = bloqueado || fueraDePlan;
+          const titulo = inerte
             ? '<h2 class="card-title clamp-2">' + m.titulo + "</h2>"
             : '<h2 class="card-title clamp-2"><a class="text-inherit" href="' + href + '">' + m.titulo + "</a></h2>";
 
+          /* El número es la POSICIÓN en el recorrido, no el id: los ids del mapa
+             van de 10 en 10 y saltan. Un módulo fuera de plan no tiene posición
+             —no está en tu recorrido—, así que en su lugar va el ícono del plan. */
+          const marca = fueraDePlan
+            ? '<span class="grid h-9 w-9 place-items-center text-ink-soft"><span class="icon icon-lg" data-icon="sparkles"></span></span>'
+            : '<span class="text-h3 font-bold text-indigo">' + ACADEMIA.posicion(m.id) + "°</span>";
+
           return (
-            '<article class="' + clase + '"' + (bloqueado ? ' aria-disabled="true"' : "") + ">" +
+            '<article class="' + clase + '"' + (inerte ? ' aria-disabled="true"' : "") + ">" +
             '<div class="flex items-start justify-between gap-3">' +
             '<div class="leading-none">' +
-            '<span class="text-h3 font-bold text-indigo">' + m.id + "°</span>" +
+            marca +
             '<span class="block text-2xs font-bold uppercase tracking-wide text-ink-soft">módulo</span>' +
             "</div>" +
             '<div class="flex flex-col items-end gap-1">' +
@@ -209,20 +246,36 @@
         }
 
         function pintar() {
-          /* En la primera visita el módulo 01 es el único disponible y el resto
-             está bloqueado: el desbloqueo es secuencial. */
-          const lista = primeraVisita
-            ? ACADEMIA.modulos.map(function (m, i) {
-                return Object.assign({}, m, {
-                  estado: i === 0 ? "disponible" : "bloqueado",
-                  vistos: 0,
-                  nota: null,
-                  meetSolicitada: null,
-                });
-              })
-            : ACADEMIA.modulos;
+          /* El estado que se pinta es el efectivo: `plan` gana sobre todo, y
+             después manda la secuencia — un módulo marcado "disponible" cuyo
+             anterior no está aprobado se muestra bloqueado. La regla vive en
+             ACADEMIA, no acá.
 
-          grilla.innerHTML = lista.map(function (m, i) { return card(m, i); }).join("");
+             Se renderizan los 11 módulos, no solo los 9 del recorrido: los que
+             el plan no incluye se muestran deshabilitados con su aviso. */
+          const primero = ACADEMIA.recorrido()[0];
+          const lista = ACADEMIA.modulos.map(function (m) {
+            /* En la primera visita nadie aprobó nada: solo abre el primero del
+               recorrido, y los de otro plan siguen siendo de otro plan. */
+            if (primeraVisita) {
+              return Object.assign({}, m, {
+                estado: ACADEMIA.aplica(m.id)
+                  ? m.id === primero.id
+                    ? "disponible"
+                    : "bloqueado"
+                  : "plan",
+                vistos: 0,
+                nota: null,
+                meetSolicitada: null,
+              });
+            }
+            return Object.assign({}, m, {
+              estado: ACADEMIA.estadoEfectivo(m.id),
+              vistos: ACADEMIA.vistosDelModulo(m.id),
+            });
+          });
+
+          grilla.innerHTML = lista.map(function (m) { return card(m); }).join("");
           renderIcons(grilla);
         }
 
@@ -236,6 +289,10 @@
             document.getElementById("skeleton-progreso").hidden = false;
           }, 200);
         } else if (primeraVisita) {
+          const primero = ACADEMIA.recorrido()[0];
+          const cta = document.getElementById("vacio-cta");
+          cta.href = "modulo.html?m=" + primero.id;
+          cta.textContent = "Empezar por el " + ACADEMIA.rotulo(primero.id).toLowerCase();
           vacio.hidden = false;
         } else {
           pintar();

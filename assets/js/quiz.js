@@ -26,13 +26,12 @@ window.Quiz = (function () {
   }
 
   function nuevoIntento(moduloId) {
-    const cantidad = Math.min(
-      ACADEMIA.quizConfig.preguntasPorIntento,
-      ACADEMIA.banco.length
-    );
+    /* El banco es del MÓDULO, nunca global: cada módulo sortea sobre el suyo. */
+    const banco = ACADEMIA.banco(moduloId);
+    const cantidad = Math.min(ACADEMIA.quizConfig.preguntasPorIntento, banco.length);
     return {
       moduloId: moduloId,
-      preguntas: mezclar(ACADEMIA.banco)
+      preguntas: mezclar(banco)
         .slice(0, cantidad)
         .map(function (q) {
           return q.id;
@@ -46,7 +45,19 @@ window.Quiz = (function () {
   function leer(moduloId) {
     try {
       const crudo = window.localStorage.getItem(CLAVE + moduloId);
-      return crudo ? JSON.parse(crudo) : null;
+      const intento = crudo ? JSON.parse(crudo) : null;
+      if (!intento || !Array.isArray(intento.preguntas)) return null;
+      /* Un intento guardado antes de que cambiara el banco referencia preguntas
+         que ya no existen. Se descarta en vez de rehidratarlo a medias: sin esto,
+         `pregunta(id)` devuelve null y la pantalla se rompe al pintar. */
+      const vigente = intento.preguntas.every(function (id) {
+        return Boolean(ACADEMIA.pregunta(id));
+      });
+      if (!vigente) {
+        descartar(moduloId);
+        return null;
+      }
+      return intento;
     } catch (e) {
       return null;
     }
@@ -69,10 +80,10 @@ window.Quiz = (function () {
     } catch (e) {}
   }
 
+  /* Los ids de pregunta son únicos entre módulos (`BAK-M30.q07`), así que el
+     intento guardado en localStorage se puede rehidratar sin saber el módulo. */
   function pregunta(id) {
-    return ACADEMIA.banco.find(function (q) {
-      return q.id === id;
-    });
+    return ACADEMIA.pregunta(id);
   }
 
   function sinResponder(intento) {

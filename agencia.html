@@ -50,9 +50,14 @@
       <div class="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
         <div>
           <h1 class="text-h2">Progreso de <span data-user-agency></span></h1>
+          <!-- La regla de agregación se nombra en pantalla a propósito: el
+               avance y el desbloqueo son POR PERSONA, y la agencia se mira
+               agregada. Sin decirlo, dos números distintos se leen como un
+               error de la pantalla. -->
           <p class="mt-2 max-w-xl text-gray-700">
-            Perfil <span class="font-bold" data-user-profile></span> ·
-            <span data-total-modulos></span> módulos en el recorrido. Solo métricas de capacitación.
+            Plan <span class="font-bold" data-user-profile></span> ·
+            <span data-total-modulos></span> módulos en el recorrido. Cada persona hace su propio
+            recorrido; acá se ve el agregado de la agencia. Solo métricas de capacitación.
           </p>
         </div>
         <div class="flex w-full flex-col gap-2 lg:w-[360px]">
