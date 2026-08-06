@@ -12,7 +12,11 @@
 window.Quiz = (function () {
   "use strict";
 
-  const CLAVE = "academia:intento:";
+  /* La clave cuelga de la persona activa: un intento a medias de una persona de
+     prueba no se le puede aparecer a otra. La compone `mock-data.js`. */
+  function clave(moduloId) {
+    return ACADEMIA.claveStorage("intento:" + moduloId);
+  }
 
   function mezclar(lista) {
     const copia = lista.slice();
@@ -44,7 +48,7 @@ window.Quiz = (function () {
 
   function leer(moduloId) {
     try {
-      const crudo = window.localStorage.getItem(CLAVE + moduloId);
+      const crudo = window.localStorage.getItem(clave(moduloId));
       const intento = crudo ? JSON.parse(crudo) : null;
       if (!intento || !Array.isArray(intento.preguntas)) return null;
       /* Un intento guardado antes de que cambiara el banco referencia preguntas
@@ -65,10 +69,7 @@ window.Quiz = (function () {
 
   function guardar(intento) {
     try {
-      window.localStorage.setItem(
-        CLAVE + intento.moduloId,
-        JSON.stringify(intento)
-      );
+      window.localStorage.setItem(clave(intento.moduloId), JSON.stringify(intento));
     } catch (e) {
       /* Modo privado sin storage: el intento vive solo en memoria. */
     }
@@ -76,7 +77,7 @@ window.Quiz = (function () {
 
   function descartar(moduloId) {
     try {
-      window.localStorage.removeItem(CLAVE + moduloId);
+      window.localStorage.removeItem(clave(moduloId));
     } catch (e) {}
   }
 

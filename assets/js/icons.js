@@ -17,6 +17,7 @@ window.ICONS = {
   play: '<path d="M8 5.5v13l10-6.5-10-6.5Z"/>',
   "play-circle": '<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5-5.5-3.5Z"/>',
   pause: '<path d="M9 5.5v13M15 5.5v13"/>',
+  activity: '<path d="M2.5 12H6l3-8 6 16 3-8h3.5"/>',
   "chevron-right": '<path d="m9 5 7 7-7 7"/>',
   "chevron-left": '<path d="m15 5-7 7 7 7"/>',
   "chevron-down": '<path d="m5 9 7 7 7-7"/>',
@@ -35,6 +36,8 @@ window.ICONS = {
   download: '<path d="M12 4v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4.5 20h15"/>',
   award:
     '<circle cx="12" cy="9.5" r="5.5"/><path d="m8.2 14.2-1.7 6.3 5.5-3 5.5 3-1.7-6.3"/>',
+  trophy:
+    '<path d="M7 3.5h10V9a5 5 0 0 1-10 0V3.5Z"/><path d="M7 5.5H4.5a2.5 2.5 0 0 0 0 5H6.4"/><path d="M17 5.5h2.5a2.5 2.5 0 0 1 0 5h-1.9"/><path d="M12 14v3"/><path d="M9 20.5c0-1.9 1.3-3.5 3-3.5s3 1.6 3 3.5"/><path d="M8 20.5h8"/>',
   video: '<rect x="3" y="6" width="12.5" height="12" rx="2"/><path d="m15.5 13 5.5 3.5v-9L15.5 11Z"/>',
   users:
     '<circle cx="9.5" cy="8.5" r="3.5"/><path d="M3.5 20a6 6 0 0 1 12 0"/><path d="M16.5 5.2a3.5 3.5 0 0 1 0 6.6"/><path d="M18 14.6a6 6 0 0 1 2.5 5.4"/>',

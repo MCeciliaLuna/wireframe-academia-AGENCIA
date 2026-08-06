@@ -32,8 +32,10 @@ duraciones, las notas y los bancos de preguntas.
 ¹ `BAK-M80.030` (Dashboard de KPIs) es el único video con plan propio: es Business dentro de un
 módulo que aplica a los dos planes.
 
-La usuaria del prototipo tiene plan **Professional**, así que su recorrido son **9 módulos**. Los
-otros dos se muestran igual, deshabilitados y con un aviso que nombra el plan que los incluye.
+La persona por defecto tiene plan **Professional**, así que su recorrido son **9 módulos**. Los
+otros dos se muestran igual, deshabilitados y con un aviso que nombra el plan que los incluye. Con
+plan Business el recorrido son los **11** y el candado desaparece — se puede ver entrando como Sofía
+(abajo).
 
 ---
 
@@ -59,9 +61,10 @@ Viven en 9 archivos: los estados transversales y los overlays se abren sobre su 
 un parámetro en la URL, igual que pasaría en el producto real.
 `design-system.html` tiene el índice completo enlazado.
 
-> **Antes de recorrer, abrí cualquier página con `?reset=1`** para volver al estado inicial:
-> `BAK-M00` y `BAK-M10` aprobados, `BAK-M20` en curso, el resto del recorrido bloqueado, y
-> `BAK-M90` / `BAK-M95` fuera del plan.
+> **Antes de recorrer, abrí cualquier página con `?reset=1`** para volver al estado inicial. Los
+> deep links de la tabla se recorren como **Lucía**, la persona por defecto: `BAK-M00` y `BAK-M10`
+> aprobados, `BAK-M20` en curso, el resto del recorrido bloqueado, y `BAK-M90` / `BAK-M95` fuera
+> del plan.
 
 | # | Pantalla | URL |
 |---|---|---|
@@ -96,6 +99,26 @@ un parámetro en la URL, igual que pasaría en el producto real.
 `?m=` es el número del módulo en el mapa (`0`, `10`, `20` … `95`), **no** su posición en el recorrido.
 `?v=` alcanza solo: el módulo se deduce del ID del video.
 
+### Las cuatro personas de prueba
+
+El avance de una sola usuaria no puede mostrar a la vez el recorrido en curso, el terminado y el que
+no empezó. Se cambia con **`?u=`** en cualquier página y queda persistida, así que se puede navegar
+sin volver a pasarla. La tabla completa, con los enlaces, está en `design-system.html`.
+
+| `?u=` | Persona | Agencia · plan | Cómo llega |
+|---|---|---|---|
+| `lucia` *(default)* | Lucía Fernández | Viajes del Sur · Professional | Academia en curso: 2 de 9 aprobados y el tercero empezado |
+| `martin` | Martín Ruiz | Viajes del Sur · Professional | Recorrido terminado: 9 de 9, certificado emitido, las 9 Meets pedidas |
+| `nicolas` | Nicolás Vera | Viajes del Sur · Professional | Nunca entró: 0 de 9, solo el primer módulo abierto, sin puesto en el ranking |
+| `sofia` | Sofía Bianchi | Andes Receptivo · **Business** | Recorrido de 11: Contable y Receptivo entran, y el dashboard de KPIs se habilita |
+
+El plan es de la **agencia**, no de la persona: por eso Sofía es de otra agencia, con su propio
+plantel. Son las mismas personas del plantel de su agencia, así que el ranking y el promedio siguen
+cerrando mire quien mire.
+
+`?reset=1` limpia el avance de las cuatro y vuelve a Lucía — salvo que se pase `?u=` en la misma
+URL, que entonces entra limpio con esa persona.
+
 ### Recorrido completo, sin tocar la URL
 
 Login → listado → módulo 03 (Entidades) → un video (dale play y cruzá el 80 %: el check del sidebar
@@ -118,7 +141,8 @@ solicitud y al volver la card dice «Meet solicitada el DD/MM».
 │   ├── fonts/                   Sofia Sans + Roboto (400/700), de web-2026
 │   ├── img/logo.svg             de web-2026
 │   └── js/
-│       ├── mock-data.js         11 módulos con su syllabus, bancos, personas, reglas
+│       ├── mock-data.js         11 módulos con su syllabus, bancos, dos agencias,
+│       │                        las cuatro personas de prueba y las reglas
 │       ├── icons.js             set de iconos, hidratados en el cliente
 │       ├── ui.js                modal, menú, tooltip, tablas, ?state=
 │       ├── quiz.js              máquina de estados de la evaluación
@@ -184,19 +208,21 @@ Las dos están aplicadas de punta a punta, no solo escondiendo links:
 - Escribir `modulo.html?m=90` a mano tampoco entra: las **cuatro** pantallas que dan acceso a un
   módulo —`modulo.html`, `video.html`, `evaluacion.html` y `meet.html`— tienen la guarda.
 - `meet.html` suma una precondición propia: la Meet existe solo para un módulo **aprobado**.
-- **Aprobar desbloquea de verdad.** Las aprobaciones se guardan en `localStorage`, así que si aprobás
-  `BAK-M20`, `BAK-M30` queda disponible en todas las pantallas. **`?reset=1` en cualquier página**
-  vuelve al estado inicial — conviene usarlo antes de una demo.
+- **Aprobar desbloquea de verdad.** Las aprobaciones se guardan en `localStorage` —con una clave por
+  persona, así que aprobar como una no le ensucia el avance a otra—, y si aprobás `BAK-M20`,
+  `BAK-M30` queda disponible en todas las pantallas. **`?reset=1` en cualquier página** vuelve al
+  estado inicial — conviene usarlo antes de una demo.
 
-El número que ve el usuario es la **posición en el recorrido** (1 a 9), nunca el id del módulo: los ids
-del mapa van de 10 en 10 y saltan. Un módulo fuera de plan no tiene posición, así que en su lugar lleva
-el ícono del plan.
+El número que ve el usuario es la **posición en el recorrido** (1 a 9 con Professional, 1 a 11 con
+Business), nunca el id del módulo: los ids del mapa van de 10 en 10 y saltan. Un módulo fuera de plan
+no tiene posición, así que en su lugar lleva el ícono del plan.
 
 ### Progreso: por usuario, agregado por agencia
 
 El avance y el desbloqueo son **por usuario**. `agencia.html` muestra el agregado, con la regla de
 agregación nombrada en la propia pantalla: promedio de módulos aprobados por persona sobre los del
-recorrido del plan. Toda base de cálculo son los **9 módulos del recorrido**, no los 11 del mapa.
+recorrido del plan. Toda base de cálculo son los **módulos del recorrido** (9 con Professional, 11
+con Business), nunca los 11 del mapa por defecto.
 
 ### Diferencias con el wireframe y con el cotejo
 
@@ -249,8 +275,14 @@ Lo que quedó **cerrado por decisión** y por eso no está construido: el estado
   certificado sin ofrecer `BAK-M90`.
 - Las cuatro guardas de módulo cortan con el aviso correcto según el motivo (secuencia o plan), y
   `meet.html` además exige módulo aprobado.
-- Todas las bases de cálculo son los 9 módulos del recorrido, coincidentes entre el listado, el
-  certificado y la vista de agencia.
+- Todas las bases de cálculo son los módulos del recorrido, coincidentes entre el listado, el
+  certificado y la vista de agencia: 9 con Professional, 11 con Business.
+- **Las cuatro personas de prueba**, cada una recorrida entera: Lucía en 2 de 9, Martín en 9 de 9 con
+  el certificado descargable y 1º en el ranking, Nicolás en 0 de 9 sin puesto, y Sofía en 3 de 11 con
+  los ordinales de 1 a 11 sin huecos. El plantel de cada agencia da los mismos números mirado desde
+  cualquiera de ellas.
+- El avance de cada persona está aislado: aprobar como una no mueve a las demás, `?u=` sobrevive a la
+  navegación, `?u=nicolas&reset=1` entra limpio como Nicolás y un `?u=` inválido cae en Lucía.
 - Sin aritmética sobre el id del módulo y sin contadores de videos paralelos al syllabus.
 - Sin scroll horizontal en ninguna página a 375, 768 y 1024 px.
 - Un solo `<h1>` visible por pantalla y jerarquía de headings sin saltos.

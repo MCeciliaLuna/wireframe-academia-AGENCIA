@@ -15,22 +15,16 @@
 window.ACADEMIA = (function () {
   "use strict";
 
-  /* -- Identidad -------------------------------------------------------------
-     `perfil` es el plan de la agencia y decide qué módulos entran al recorrido.
-     La nomenclatura es la del mapa de contenido: Professional y Business. Con
-     Professional, los módulos M90 (Contable) y M95 (Receptivo) quedan fuera del
-     recorrido y se muestran con candado de plan. */
-  const usuario = {
-    nombre: "Lucía Fernández",
-    email: "lucia.fernandez@viajesdelsur.com",
-    iniciales: "LF",
-    agencia: "Viajes del Sur",
-    perfil: "Professional",
-  };
-
+  /* Los dos planes son los del mapa de contenido. El plan es de la AGENCIA, no
+     de la persona: con Professional, los módulos M90 (Contable) y M95
+     (Receptivo) quedan fuera del recorrido y se muestran con candado de plan. */
   const PROF = "Professional";
   const BUS = "Business";
   const TODOS = [PROF, BUS];
+
+  /* Se lee acá porque el reseteo y la persona activa se resuelven antes que
+     cualquier otra cosa: de la persona sale el plan, y del plan el recorrido. */
+  const reseteando = /[?&]reset=1(&|$)/.test(window.location.search);
 
   /* -- Fechas ----------------------------------------------------------------
      Los timestamps del prototipo son ISO local con segundos, en ART (UTC-3):
@@ -78,17 +72,233 @@ window.ACADEMIA = (function () {
     return n ? n + "º" : null;
   }
 
+  /* -- Agencias y plantel ----------------------------------------------------
+     El plan es de la AGENCIA, así que las personas de prueba con planes
+     distintos no pueden compartirla. Son dos, con plantel propio: solo métricas
+     de capacitación, sin datos personales sensibles ni respuestas individuales
+     de las evaluaciones.
+
+     `ultimaAprobacion` es el timestamp del módulo aprobado más reciente y es el
+     desempate del ranking: entre dos personas con la misma cantidad de módulos,
+     va primero la que llegó antes a ese número. En Viajes del Sur, Paula y
+     Lucía empatan en 2 a propósito, para que el desempate se pueda ver.
+
+     Las filas de las personas con las que se puede entrar (`empleadoId` de
+     `personas`) se recalculan desde `modulos` al final del archivo: las tres
+     pantallas que las muestran nunca pueden dar números distintos. */
+  const agencias = {
+    "viajes-del-sur": {
+      id: "viajes-del-sur",
+      nombre: "Viajes del Sur",
+      plan: PROF,
+      plantel: [
+        /* Lucía (1), Martín (2) y Nicolás (6) son personas de prueba: sus
+           números salen de su seed y no se cargan acá. */
+        { id: 1, nombre: "Lucía Fernández", ultimoAccesoISO: isoHoy() + "T10:12:00" },
+        { id: 2, nombre: "Martín Ruiz", ultimoAccesoISO: "2026-07-28T17:03:41" },
+        { id: 3, nombre: "Carla Domínguez", aprobados: 5, ultimaAprobacion: "2026-07-21T15:08:47", ultimoAccesoISO: "2026-07-30T11:26:19" },
+        { id: 4, nombre: "Diego Sosa", aprobados: 3, ultimaAprobacion: "2026-07-14T10:33:04", ultimoAccesoISO: "2026-07-25T09:12:58" },
+        { id: 5, nombre: "Paula Iglesias", aprobados: 2, ultimaAprobacion: "2026-06-05T18:52:09", ultimoAccesoISO: "2026-07-19T14:47:33" },
+        { id: 6, nombre: "Nicolás Vera", ultimoAccesoISO: null },
+      ],
+    },
+    /* Operador receptivo: necesita Contable y Receptivo, así que su recorrido
+       son los 11 módulos. Existe para poder recorrer el prototipo con plan
+       Business, que cambia el denominador de toda base de cálculo. */
+    "andes-receptivo": {
+      id: "andes-receptivo",
+      nombre: "Andes Receptivo",
+      plan: BUS,
+      plantel: [
+        /* Sofía (101) es persona de prueba: sus números salen de su seed. */
+        { id: 101, nombre: "Sofía Bianchi", ultimoAccesoISO: isoHoy() + "T09:40:00" },
+        { id: 102, nombre: "Ramiro Cabrera", aprobados: 11, certificado: true, ultimaAprobacion: "2026-07-25T18:22:14", ultimoAccesoISO: "2026-07-31T09:05:12" },
+        { id: 103, nombre: "Julieta Ponce", aprobados: 7, ultimaAprobacion: "2026-07-20T11:14:36", ultimoAccesoISO: "2026-07-29T16:48:02" },
+        { id: 104, nombre: "Tomás Ferreyra", aprobados: 3, ultimaAprobacion: "2026-07-11T09:37:55", ultimoAccesoISO: "2026-07-28T13:20:44" },
+        { id: 105, nombre: "Ana Lucero", aprobados: 0, ultimaAprobacion: null, ultimoAccesoISO: null },
+      ],
+    },
+  };
+
+  /* -- Personas de prueba ----------------------------------------------------
+     Andamiaje del prototipo, no del producto: en sigmma.net la identidad viene
+     del SSO. Existen para poder recorrer las cuatro situaciones que el avance
+     de una sola usuaria no puede mostrar a la vez — en curso, recorrido
+     terminado, sin ninguna interacción, y plan Business.
+
+     `seed` es el avance con el que arranca cada una. El contenido (`modulos`)
+     no sabe nada de esto: se aplica encima, al arrancar, y recién después las
+     aprobaciones que la persona haya hecho en el prototipo.
+
+     Son las mismas personas del plantel de su agencia (`empleadoId`): entrar
+     como alguien mueve el flag `esVos` a su fila y el ranking sigue cerrando.
+
+     · `aprobados`   — módulos con nota, fecha y, si pidió la Meet, su día.
+     · `enProgreso`  — el módulo donde quedó, si hay alguno.
+     · `videos`      — avance parcial. Los videos de un módulo aprobado se
+                       marcan vistos solos: no hace falta enumerarlos. */
+  const personas = [
+    {
+      clave: "lucia",
+      nombre: "Lucía Fernández",
+      email: "lucia.fernandez@viajesdelsur.com",
+      iniciales: "LF",
+      agenciaId: "viajes-del-sur",
+      empleadoId: 1,
+      resumen: "Academia en curso: dos módulos aprobados y el tercero empezado.",
+      seed: {
+        aprobados: [
+          { id: 0, nota: 9, aprobadoEn: "2026-06-02T11:20:35" },
+          { id: 10, nota: 8, aprobadoEn: "2026-06-08T16:05:12", meetSolicitada: "09/06" },
+        ],
+        enProgreso: 20,
+        videos: {
+          "BAK-M20.010": { visto: true },
+          "BAK-M20.020": { visto: true },
+          "BAK-M20.030": { progreso: 41 },
+        },
+      },
+    },
+    {
+      clave: "martin",
+      nombre: "Martín Ruiz",
+      email: "martin.ruiz@viajesdelsur.com",
+      iniciales: "MR",
+      agenciaId: "viajes-del-sur",
+      empleadoId: 2,
+      resumen: "Recorrido terminado: los 9 módulos aprobados, certificado emitido y las 9 Meets pedidas.",
+      seed: {
+        aprobados: [
+          { id: 0, nota: 9, aprobadoEn: "2026-06-01T09:12:40", meetSolicitada: "02/06" },
+          { id: 10, nota: 10, aprobadoEn: "2026-06-05T11:38:05", meetSolicitada: "06/06" },
+          { id: 20, nota: 8, aprobadoEn: "2026-06-11T15:22:18", meetSolicitada: "12/06" },
+          { id: 30, nota: 9, aprobadoEn: "2026-06-18T10:04:51", meetSolicitada: "19/06" },
+          { id: 40, nota: 8, aprobadoEn: "2026-06-25T16:47:09", meetSolicitada: "26/06" },
+          { id: 50, nota: 10, aprobadoEn: "2026-07-02T09:55:33", meetSolicitada: "03/07" },
+          { id: 60, nota: 9, aprobadoEn: "2026-07-09T14:19:26", meetSolicitada: "10/07" },
+          { id: 70, nota: 8, aprobadoEn: "2026-07-16T11:31:47", meetSolicitada: "17/07" },
+          /* Coincide con su `ultimaAprobacion` en el plantel: es lo que lo pone
+             primero en el ranking de la agencia. */
+          { id: 80, nota: 10, aprobadoEn: "2026-07-28T09:41:22", meetSolicitada: "29/07" },
+        ],
+        enProgreso: null,
+        videos: {},
+      },
+    },
+    {
+      clave: "nicolas",
+      nombre: "Nicolás Vera",
+      email: "nicolas.vera@viajesdelsur.com",
+      iniciales: "NV",
+      agenciaId: "viajes-del-sur",
+      empleadoId: 6,
+      resumen: "Nunca entró: sin módulos aprobados, sin videos vistos y sin puesto en el ranking.",
+      seed: { aprobados: [], enProgreso: null, videos: {} },
+    },
+    {
+      clave: "sofia",
+      nombre: "Sofía Bianchi",
+      email: "sofia.bianchi@andesreceptivo.com",
+      iniciales: "SB",
+      agenciaId: "andes-receptivo",
+      empleadoId: 101,
+      resumen: "Plan Business: recorrido de 11 módulos, con Contable y Receptivo incluidos.",
+      seed: {
+        aprobados: [
+          { id: 0, nota: 8, aprobadoEn: "2026-07-06T10:15:22", meetSolicitada: "07/07" },
+          { id: 10, nota: 9, aprobadoEn: "2026-07-14T12:40:11" },
+          { id: 20, nota: 8, aprobadoEn: "2026-07-22T17:05:48" },
+        ],
+        enProgreso: 30,
+        videos: {
+          "BAK-M30.010": { visto: true },
+          "BAK-M30.020": { progreso: 62 },
+        },
+      },
+    },
+  ];
+
+  /* -- Persona activa --------------------------------------------------------
+     Se resuelve antes que nada porque de la persona sale el plan de su agencia,
+     y del plan sale el recorrido. El orden es deliberado: `?reset=1` corre
+     primero, así `?u=nicolas&reset=1` entra limpio COMO Nicolás.
+
+       1 · `?reset=1`         → vuelve a la persona por defecto
+       2 · `?u=<clave>`       → la fija y la persiste
+       3 · `academia:persona` → la última con la que se entró
+       4 · nada, o una clave que no existe → `lucia`
+
+     Toda la persistencia del prototipo cuelga de la persona (`claveStorage`):
+     aprobar como una no le puede ensuciar el avance a otra. */
+  const CLAVE_PERSONA = "academia:persona";
+
+  function personaPorClave(clave) {
+    return personas.find(function (p) { return p.clave === clave; }) || null;
+  }
+
+  function leerStorage(clave) {
+    try {
+      return window.localStorage.getItem(clave);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function escribirStorage(clave, valor) {
+    try {
+      window.localStorage.setItem(clave, valor);
+    } catch (e) {
+      /* Modo privado sin storage: el avance vive solo en esta pantalla. */
+    }
+  }
+
+  function resolverPersona() {
+    const pedida = new URLSearchParams(window.location.search).get("u");
+    if (pedida && personaPorClave(pedida)) {
+      escribirStorage(CLAVE_PERSONA, pedida);
+      return personaPorClave(pedida);
+    }
+    if (reseteando) {
+      escribirStorage(CLAVE_PERSONA, personas[0].clave);
+      return personas[0];
+    }
+    return personaPorClave(leerStorage(CLAVE_PERSONA)) || personas[0];
+  }
+
+  const persona = resolverPersona();
+  const agencia = agencias[persona.agenciaId];
+  const empleados = agencia.plantel;
+
+  /* La identidad que consume toda la interfaz. `perfil` es el plan de la
+     agencia, nunca un atributo de la persona. */
+  const usuario = {
+    nombre: persona.nombre,
+    email: persona.email,
+    iniciales: persona.iniciales,
+    agencia: agencia.nombre,
+    perfil: agencia.plan,
+  };
+
+  /* Prefijo de storage por persona. Lo usan las aprobaciones de acá y los
+     intentos de evaluación de `quiz.js`: nadie vuelve a componer la clave a
+     mano. */
+  function claveStorage(sufijo) {
+    return "academia:" + sufijo + ":" + persona.clave;
+  }
+
   /* Atajo de carga del syllabus: `v(id, titulo, "M:SS")` deriva los segundos de
-     la duración, para que los dos números no puedan contradecirse. */
-  function v(id, titulo, duracion, progreso, visto, planes) {
+     la duración, para que los dos números no puedan contradecirse. `progreso` y
+     `visto` arrancan siempre en cero: el avance no es parte del contenido, lo
+     pone el seed de la persona activa. */
+  function v(id, titulo, duracion, planes) {
     const partes = duracion.split(":");
     return {
       id: id,
       titulo: titulo,
       duracion: duracion,
       segundos: Number(partes[0]) * 60 + Number(partes[1]),
-      progreso: progreso || 0,
-      visto: Boolean(visto),
+      progreso: 0,
+      visto: false,
       /* Solo M80.030 lo usa: es el único video con tag de plan distinto del de
          su módulo. Sin este campo, el módulo entero tendría que ser Business. */
       planes: planes || null,
@@ -99,8 +309,11 @@ window.ACADEMIA = (function () {
      `id` es el número del mapa (0, 10, 20 … 95) y es lo que viaja en `?m=`.
      `codigo` es el ID permanente, que no se muestra en la interfaz de agencia:
      ahí el módulo se nombra por su POSICIÓN en el recorrido (`posicion(id)`).
-     `estado` es el estado inicial del prototipo; el desbloqueo secuencial y el
-     filtro de plan lo recalculan en runtime con `estadoEfectivo(id)`.
+
+     El contenido es SOLO contenido: acá todos los módulos arrancan bloqueados y
+     todos los videos sin ver. El avance lo pone el seed de la persona activa
+     (ver `personas`), y encima corren el desbloqueo secuencial y el filtro de
+     plan, que se resuelven en runtime con `estadoEfectivo(id)`.
 
      El orden de los videos dentro de cada sección es el de carga, no el del ID:
      tres secciones lo rompen a propósito (M40.S3, M70.S1, M80.S2) porque el
@@ -115,10 +328,7 @@ window.ACADEMIA = (function () {
       descripcion:
         "El punto de partida: qué resuelve SIGMMA dentro de la agencia, cómo se conecta el ciclo de la operación turística y cómo navegar el sistema. No hace falta saber nada previo.",
       planes: TODOS,
-      estado: "aprobado",
-      nota: 9,
-      aprobadoEn: "2026-06-02T11:20:35",
-      meetSolicitada: null,
+      estado: "bloqueado",
       secciones: [
         {
           orden: 1,
@@ -146,10 +356,7 @@ window.ACADEMIA = (function () {
       descripcion:
         "El file es donde vive cada operación. Acá vas a ver cómo encontrarlo, cómo crearlo según el tipo de servicio, y las decisiones de configuración que después condicionan todo: moneda, datos y estados.",
       planes: TODOS,
-      estado: "aprobado",
-      nota: 8,
-      aprobadoEn: "2026-06-08T16:05:12",
-      meetSolicitada: "09/06",
+      estado: "bloqueado",
       secciones: [
         {
           orden: 1,
@@ -185,24 +392,21 @@ window.ACADEMIA = (function () {
       descripcion:
         "Clientes, pasajeros y proveedores son las tres entidades sobre las que se apoya toda la operación. Este módulo aísla la distinción entre cliente y pasajero, que es el concepto que más se confunde, y cierra con la carga masiva desde Excel.",
       planes: TODOS,
-      estado: "en-progreso",
-      nota: null,
-      aprobadoEn: null,
-      meetSolicitada: null,
+      estado: "bloqueado",
       secciones: [
         {
           orden: 1,
           titulo: "Clientes",
           videos: [
-            v("BAK-M20.010", "Cargar un cliente: físico vs. jurídico y autocompletado por ARCA/CUIT", "4:15", 100, true),
-            v("BAK-M20.020", "Cliente: solapas de documentación, tarjetas, clasificación y adjuntos", "3:50", 100, true),
+            v("BAK-M20.010", "Cargar un cliente: físico vs. jurídico y autocompletado por ARCA/CUIT", "4:15"),
+            v("BAK-M20.020", "Cliente: solapas de documentación, tarjetas, clasificación y adjuntos", "3:50"),
           ],
         },
         {
           orden: 2,
           titulo: "Cliente vs. pasajero",
           videos: [
-            v("BAK-M20.030", "Cliente vs. pasajero: el concepto que más se confunde", "3:05", 41),
+            v("BAK-M20.030", "Cliente vs. pasajero: el concepto que más se confunde", "3:05"),
             v("BAK-M20.040", "Cargar un pasajero: pax principal y alta en la base de clientes", "3:40"),
           ],
         },
@@ -422,7 +626,7 @@ window.ACADEMIA = (function () {
           titulo: "Administración y KPIs",
           videos: [
             v("BAK-M80.040", "Informes administrativos: ingresos y egresos", "3:50"),
-            v("BAK-M80.030", "Dashboard: KPIs del negocio", "4:25", 0, false, [BUS]),
+            v("BAK-M80.030", "Dashboard: KPIs del negocio", "4:25", [BUS]),
           ],
         },
       ],
@@ -1186,73 +1390,73 @@ window.ACADEMIA = (function () {
     });
   });
 
-  /* Vista agregada de la agencia. Solo métricas de capacitación: sin datos
-     personales sensibles ni respuestas individuales de las evaluaciones. */
-  /* `ultimaAprobacion` es el timestamp del módulo aprobado más reciente y es el
-     desempate del ranking: entre dos personas con la misma cantidad de módulos,
-     va primero la que llegó antes a ese número. Paula y Lucía empatan en 2 a
-     propósito, para que el desempate se pueda ver en el prototipo. */
-  const empleados = [
-    /* Los datos de la usuaria logueada se recalculan abajo desde `modulos`,
-       para que las tres pantallas nunca muestren números distintos. */
-    {
-      id: 1,
-      nombre: "Lucía Fernández",
-      esVos: true,
-      aprobados: 0,
-      ultimaAprobacion: null,
-      ultimoAccesoISO: isoHoy() + "T10:12:00",
-    },
-    {
-      id: 2,
-      nombre: "Martín Ruiz",
-      aprobados: 9,
-      certificado: true,
-      ultimaAprobacion: "2026-07-28T09:41:22",
-      ultimoAccesoISO: "2026-07-28T17:03:41",
-    },
-    {
-      id: 3,
-      nombre: "Carla Domínguez",
-      aprobados: 5,
-      ultimaAprobacion: "2026-07-21T15:08:47",
-      ultimoAccesoISO: "2026-07-30T11:26:19",
-    },
-    {
-      id: 4,
-      nombre: "Diego Sosa",
-      aprobados: 3,
-      ultimaAprobacion: "2026-07-14T10:33:04",
-      ultimoAccesoISO: "2026-07-25T09:12:58",
-    },
-    {
-      id: 5,
-      nombre: "Paula Iglesias",
-      aprobados: 2,
-      ultimaAprobacion: "2026-06-05T18:52:09",
-      ultimoAccesoISO: "2026-07-19T14:47:33",
-    },
-    {
-      id: 6,
-      nombre: "Nicolás Vera",
-      aprobados: 0,
-      ultimaAprobacion: null,
-      ultimoAccesoISO: null,
-    },
-  ];
+  /* -- El avance de la persona activa ----------------------------------------
+     Dos capas, en este orden: primero el seed —de dónde arranca la persona— y
+     encima las aprobaciones que haya hecho recorriendo el prototipo. */
 
-  /* -- Aprobaciones que persisten --------------------------------------------
-     El prototipo no tiene backend, pero el desbloqueo secuencial no se puede
-     demostrar si aprobar un módulo se olvida al navegar. Se guardan en
-     localStorage los módulos que la usuaria aprueba durante el recorrido, y se
-     aplican sobre el mock al arrancar. `?reset=1` en cualquier página vuelve
-     todo al estado inicial, para arrancar una demo limpia. */
-  const CLAVE_APROBADOS = "academia:aprobados";
+  function videoPorId(id) {
+    let hallado = null;
+    modulos.forEach(function (m) {
+      m.secciones.forEach(function (s) {
+        s.videos.forEach(function (vi) {
+          if (vi.id === id) hallado = vi;
+        });
+      });
+    });
+    return hallado;
+  }
+
+  function aprobarEnMock(m, nota, aprobadoEn, meetSolicitada) {
+    m.estado = "aprobado";
+    m.nota = nota;
+    m.aprobadoEn = aprobadoEn;
+    if (meetSolicitada) m.meetSolicitada = meetSolicitada;
+    /* Un módulo aprobado tiene sus videos vistos. Se marcan acá y no en cada
+       vista porque `video.html` lee `visto` crudo: sin esto, un módulo aprobado
+       mostraría "No visto" adentro y "6 de 6" afuera. Los videos que el plan de
+       la agencia no habilita quedan afuera: no se pueden ver. */
+    m.secciones.forEach(function (s) {
+      s.videos.forEach(function (vi) {
+        if (!vi.planes || vi.planes.indexOf(usuario.perfil) !== -1) {
+          vi.visto = true;
+          vi.progreso = 100;
+        }
+      });
+    });
+  }
+
+  function aplicarSeed(seed) {
+    seed.aprobados.forEach(function (registro) {
+      const m = modulos.find(function (x) { return x.id === Number(registro.id); });
+      if (m) aprobarEnMock(m, registro.nota, registro.aprobadoEn, registro.meetSolicitada);
+    });
+    if (seed.enProgreso !== null) {
+      const m = modulos.find(function (x) { return x.id === Number(seed.enProgreso); });
+      if (m) m.estado = "en-progreso";
+    }
+    Object.keys(seed.videos).forEach(function (id) {
+      const vi = videoPorId(id);
+      if (!vi) return;
+      const avance = seed.videos[id];
+      if (avance.visto) {
+        vi.visto = true;
+        vi.progreso = 100;
+      } else {
+        vi.progreso = avance.progreso || 0;
+      }
+    });
+  }
+
+  /* Las aprobaciones que la persona hace en el prototipo. No hay backend, pero
+     el desbloqueo secuencial no se puede demostrar si aprobar un módulo se
+     olvida al navegar. La clave cuelga de la persona: aprobar como una no le
+     puede ensuciar el avance a otra. `?reset=1` en cualquier página vuelve
+     todo al estado inicial —de las cuatro personas—, para una demo limpia. */
+  const CLAVE_APROBADOS = claveStorage("aprobados");
 
   function leerAprobados() {
     try {
-      const crudo = window.localStorage.getItem(CLAVE_APROBADOS);
-      const lista = crudo ? JSON.parse(crudo) : [];
+      const lista = JSON.parse(leerStorage(CLAVE_APROBADOS) || "[]");
       return Array.isArray(lista) ? lista : [];
     } catch (e) {
       return [];
@@ -1260,27 +1464,26 @@ window.ACADEMIA = (function () {
   }
 
   function escribirAprobados(lista) {
-    try {
-      window.localStorage.setItem(CLAVE_APROBADOS, JSON.stringify(lista));
-    } catch (e) {
-      /* Modo privado sin storage: el avance vive solo en esta pantalla. */
-    }
+    escribirStorage(CLAVE_APROBADOS, JSON.stringify(lista));
   }
 
-  if (/[?&]reset=1(&|$)/.test(window.location.search)) {
+  if (reseteando) {
     try {
-      window.localStorage.removeItem(CLAVE_APROBADOS);
       Object.keys(window.localStorage)
-        .filter(function (k) { return k.indexOf("academia:intento:") === 0; })
+        /* `academia:persona` sobrevive: `?u=nicolas&reset=1` tiene que entrar
+           limpio pero COMO Nicolás, y seguir siéndolo al navegar. */
+        .filter(function (k) { return k.indexOf("academia:") === 0 && k !== CLAVE_PERSONA; })
         .forEach(function (k) { window.localStorage.removeItem(k); });
     } catch (e) {}
-  } else {
+  }
+
+  aplicarSeed(persona.seed);
+
+  if (!reseteando) {
     leerAprobados().forEach(function (registro) {
       const m = modulos.find(function (x) { return x.id === Number(registro.id); });
       if (!m || m.estado === "aprobado") return;
-      m.estado = "aprobado";
-      m.nota = registro.nota;
-      m.aprobadoEn = registro.aprobadoEn;
+      aprobarEnMock(m, registro.nota, registro.aprobadoEn, null);
     });
   }
 
@@ -1314,6 +1517,19 @@ window.ACADEMIA = (function () {
     soporte,
     quizConfig,
     umbralVisto,
+
+    /* -- Personas de prueba ------------------------------------------------
+       Andamiaje del prototipo: `personas` es el catálogo (lo pinta la tabla del
+       design system) y `persona` / `agencia` son las activas. */
+    personas,
+    persona,
+    agencia,
+    claveStorage,
+    /* La agencia de cualquier persona, no solo la activa: la tabla del design
+       system las lista todas. */
+    agenciaDe(p) {
+      return agencias[p.agenciaId];
+    },
 
     /* -- Recorrido y plan --------------------------------------------------
        El recorrido de la usuaria son los módulos que su plan incluye, en orden.
@@ -1423,9 +1639,7 @@ window.ACADEMIA = (function () {
       const m = this.modulo(id);
       if (!m) return;
       const aprobadoEn = new Date().toISOString().slice(0, 19);
-      m.estado = "aprobado";
-      m.nota = nota;
-      m.aprobadoEn = aprobadoEn;
+      aprobarEnMock(m, nota, aprobadoEn, null);
       m.fechaAprobacion = fechaCorta(aprobadoEn);
 
       const lista = leerAprobados().filter(function (r) {
@@ -1619,13 +1833,38 @@ window.ACADEMIA = (function () {
     },
   };
 
-  /* Los datos de la usuaria logueada se derivan del recorrido, para que las tres
-     pantallas que los muestran nunca den números distintos. */
+  /* -- Cerrar el plantel -----------------------------------------------------
+     Las filas de las personas con las que se puede entrar no se cargan a mano:
+     salen de su seed. Si no, con quién estás logueada cambiaría los números de
+     las demás — Lucía aparecería en 0 cuando la mira Martín. */
+  function filaDe(empleadoId) {
+    return empleados.find(function (e) { return e.id === empleadoId; });
+  }
+
+  personas
+    .filter(function (p) { return p.agenciaId === agencia.id; })
+    .forEach(function (p) {
+      const fila = filaDe(p.empleadoId);
+      if (!fila) return;
+      fila.aprobados = p.seed.aprobados.length;
+      fila.ultimaAprobacion = p.seed.aprobados.reduce(function (ultimo, r) {
+        return !ultimo || r.aprobadoEn > ultimo ? r.aprobadoEn : ultimo;
+      }, null);
+      fila.certificado = fila.aprobados === API.total();
+    });
+
+  /* La persona logueada es la excepción: su fila se deriva del recorrido en vivo
+     —el seed más lo que haya aprobado en el prototipo—, para que las tres
+     pantallas que la muestran nunca den números distintos. Se ubica por
+     `empleadoId`, nunca por posición: cuál es depende de con quién se entró. */
+  const miFila = filaDe(persona.empleadoId);
   const suyos = API.recorrido().filter(function (m) { return m.estado === "aprobado"; });
-  empleados[0].aprobados = suyos.length;
-  empleados[0].ultimaAprobacion = suyos.reduce(function (ultimo, m) {
+  miFila.esVos = true;
+  miFila.aprobados = suyos.length;
+  miFila.ultimaAprobacion = suyos.reduce(function (ultimo, m) {
     return !ultimo || m.aprobadoEn > ultimo ? m.aprobadoEn : ultimo;
   }, null);
+  miFila.certificado = suyos.length === API.total();
 
   return API;
 })();

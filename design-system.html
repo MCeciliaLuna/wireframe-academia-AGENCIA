@@ -30,9 +30,11 @@
         <p class="eyebrow mb-3">En esta página</p>
         <ul class="flex flex-col gap-1 text-sm">
           <li><a class="nav-link w-full justify-start" href="#pantallas">Mapa de pantallas</a></li>
+          <li><a class="nav-link w-full justify-start" href="#personas">Personas de prueba</a></li>
           <li><a class="nav-link w-full justify-start" href="#color">Color</a></li>
           <li><a class="nav-link w-full justify-start" href="#tipografia">Tipografía</a></li>
           <li><a class="nav-link w-full justify-start" href="#espacio">Espacio y forma</a></li>
+          <li><a class="nav-link w-full justify-start" href="#iconos">Íconos</a></li>
           <li><a class="nav-link w-full justify-start" href="#gesto">Gesto de marca</a></li>
           <li><a class="nav-link w-full justify-start" href="#botones">Botones</a></li>
           <li><a class="nav-link w-full justify-start" href="#cards">Cards de módulo</a></li>
@@ -76,13 +78,15 @@
               <span class="icon" data-icon="info"></span>
               <p>
                 <strong>Antes de recorrer, abrí <a class="font-bold underline" href="modulos.html?reset=1">modulos.html?reset=1</a></strong>
-                para volver al estado inicial: <span class="font-mono">BAK-M00</span> y
-                <span class="font-mono">BAK-M10</span> aprobados,
+                para volver al estado inicial. Los enlaces de esta tabla se recorren como
+                <strong>Lucía</strong>, la persona por defecto: <span class="font-mono">BAK-M00</span>
+                y <span class="font-mono">BAK-M10</span> aprobados,
                 <span class="font-mono">BAK-M20</span> en curso, el resto del recorrido bloqueado, y
                 <span class="font-mono">BAK-M90</span> / <span class="font-mono">BAK-M95</span> fuera
                 del plan Professional. La fila 21 muestra la guarda de secuencia hasta que apruebes
                 los módulos anteriores: es el mismo comportamiento del producto, no un error del
-                enlace.
+                enlace. Para ver las mismas pantallas con otro avance, mirá
+                <a class="font-bold underline" href="#personas">Personas de prueba</a>.
               </p>
             </div>
           </div>
@@ -127,6 +131,42 @@
                   <tr><td class="text-ink-soft">20</td><td><a href="meet.html?m=90">Meet de un módulo fuera de plan</a></td><td class="meta font-mono">meet.html?m=90</td></tr>
                   <tr><td class="text-ink-soft">21</td><td><a href="modulo.html?m=80">Video con plan propio dentro del módulo</a></td><td class="meta font-mono">modulo.html?m=80</td></tr>
                 </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════ PERSONAS DE PRUEBA ══════════ -->
+        <section id="personas" class="flex flex-col gap-5">
+          <div>
+            <h2 class="text-h3">Personas de prueba</h2>
+            <p class="mt-2 max-w-2xl text-gray-700">
+              El avance de una sola usuaria no puede mostrar a la vez el recorrido en curso, el
+              terminado y el que no empezó. Estas cuatro personas existen para eso: cada una entra
+              con un avance distinto y todas las pantallas quedan coherentes entre sí. Son andamiaje
+              del prototipo, no del producto: en sigmma.net la identidad viene del SSO.
+            </p>
+            <p class="mt-3 max-w-2xl text-gray-700">
+              Se cambia con <span class="font-mono">?u=</span> en cualquier página y queda
+              persistida, así que se puede navegar sin volver a pasarla.
+              <span class="font-mono">?reset=1</span> limpia el avance de las cuatro y vuelve a
+              Lucía — salvo que se pase <span class="font-mono">?u=</span> en la misma URL, que
+              entonces entra limpio con esa persona.
+            </p>
+          </div>
+
+          <div class="table-wrap">
+            <div class="table-scroll">
+              <table class="table-app">
+                <thead>
+                  <tr>
+                    <th>Persona</th>
+                    <th>Agencia · plan</th>
+                    <th>Cómo llega</th>
+                    <th style="width: 260px">Entrar como</th>
+                  </tr>
+                </thead>
+                <tbody id="tabla-personas"></tbody>
               </table>
             </div>
           </div>
@@ -252,6 +292,27 @@
             <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">xs · 13</span><span class="text-xs">8 videos · 34 min · Nivel intermedio</span></div>
             <div class="flex flex-wrap items-baseline gap-x-6 gap-y-1 p-5"><span class="meta w-40 shrink-0 font-mono">2xs · 12 (mínimo)</span><span class="eyebrow">Módulo 03</span></div>
           </div>
+
+          <div class="card">
+            <h3 class="text-h5">Números tabulares</h3>
+            <p class="meta mt-1">
+              Los dos <span class="font-mono">.woff2</span> son subsets, pero
+              <strong>conservan la feature <span class="font-mono">tnum</span></strong> — verificado
+              midiendo el avance de «111» contra «000» con la fuente ya resuelta. Va donde los
+              números se apilan en columna: el <span class="font-mono">%</span> y el «N de M» de la
+              tabla del plantel, y el avance agregado. En un dígito suelto no alinea nada.
+            </p>
+            <div class="mt-4 flex flex-col gap-1">
+              <span class="flex items-baseline gap-4">
+                <span class="meta w-32 shrink-0 font-mono">proporcional</span>
+                <span class="text-h4">111 · 000</span>
+              </span>
+              <span class="flex items-baseline gap-4">
+                <span class="meta w-32 shrink-0 font-mono">tabular-nums</span>
+                <span class="text-h4 tabular-nums">111 · 000</span>
+              </span>
+            </div>
+          </div>
         </section>
 
         <!-- ══════════ ESPACIO Y FORMA ══════════ -->
@@ -297,6 +358,119 @@
                   <div class="text-center"><div class="grid h-16 w-28 place-items-center rounded-lg border border-line bg-white shadow-glow"></div><p class="meta mt-1 font-mono">glow</p></div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ══════════ ÍCONOS ══════════ -->
+        <section id="iconos" class="flex flex-col gap-5">
+          <div>
+            <h2 class="text-h3">Íconos</h2>
+            <p class="mt-2 max-w-2xl text-gray-700">
+              Trazo de 2 px sobre grilla de 24, sin relleno, extremos redondeados y
+              <span class="font-mono">currentColor</span>: el ícono toma el color del texto que lo
+              rodea, así que no lleva color propio casi nunca. Se hidratan desde
+              <span class="font-mono">&lt;span class="icon" data-icon="nombre"&gt;</span> contra un mapa
+              en JS y <strong>no</strong> contra un sprite: un
+              <span class="font-mono">&lt;use href="archivo.svg#id"&gt;</span> no carga bajo
+              <span class="font-mono">file://</span> y el prototipo tiene que abrir con doble click.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3 class="text-h5">El set completo</h3>
+            <p class="meta mt-1">
+              Se pinta desde <span class="font-mono">window.ICONS</span>: al agregar uno aparece acá
+              solo. Tamaños: <span class="font-mono">.icon</span> 18 ·
+              <span class="font-mono">.icon-sm</span> 14 · <span class="font-mono">.icon-lg</span> 24
+              · <span class="font-mono">.icon-xl</span> 28.
+            </p>
+            <div
+              class="mt-4 grid grid-cols-3 gap-3 md:grid-cols-6 lg:grid-cols-8"
+              id="grilla-iconos"
+            ></div>
+          </div>
+
+          <div class="grid items-start gap-6 md:grid-cols-2">
+            <div class="card">
+              <h3 class="text-h5">Pairing ícono ↔ token</h3>
+              <p class="meta mt-1">
+                Las métricas del dashboard de <span class="font-mono">agencia.html</span>. Dos reglas:
+                <strong>un solo acento de color por pantalla</strong> —el resto en gris— y
+                <strong>nunca ámbar ni rojo sobre una persona</strong> por no haber capacitado.
+              </p>
+              <div class="mt-4 flex flex-col gap-3">
+                <span class="flex items-center gap-2 text-ink-soft">
+                  <span class="icon icon-sm" data-icon="users"></span>
+                  <span class="eyebrow">Personas</span>
+                  <span class="meta font-mono">neutral</span>
+                </span>
+                <span class="flex items-center gap-2 text-ink-soft">
+                  <span class="icon icon-sm" data-icon="activity"></span>
+                  <span class="eyebrow">Con actividad</span>
+                  <span class="meta font-mono">neutral</span>
+                </span>
+                <span class="flex items-center gap-2 text-ink-soft">
+                  <span class="icon icon-sm text-success-dark" data-icon="check-circle"></span>
+                  <span class="eyebrow">Completado</span>
+                  <span class="meta font-mono">success-dark · el único</span>
+                </span>
+                <span class="flex items-center gap-2 text-ink-soft">
+                  <span class="icon icon-sm" data-icon="clock"></span>
+                  <span class="eyebrow">Sin empezar</span>
+                  <span class="meta font-mono">neutral, nunca warning</span>
+                </span>
+                <span class="flex items-center gap-2 text-ink-soft">
+                  <span class="icon icon-sm" data-icon="trophy"></span>
+                  <span class="eyebrow">Tu puesto</span>
+                  <span class="meta font-mono">neutral</span>
+                </span>
+              </div>
+              <div class="alert alert-info mt-4">
+                <span class="icon" data-icon="info"></span>
+                <p>
+                  El acento se enciende con el <strong>dato</strong>, no con la pantalla: con cero
+                  recorridos completos el tilde vuelve al gris. Un cero no se pinta de verde.
+                </p>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3 class="text-h5">Equivalencia con Lucide</h3>
+              <p class="meta mt-1">
+                Los nombres del mapa vienen de Feather, que Lucide continuó renombrando los de dos
+                palabras a «forma primero». <strong>La clave pública es nuestro nombre</strong>; el
+                slug es la referencia para quien tenga que dibujar uno nuevo. Lucide no se importa
+                como paquete: rompe <span class="font-mono">file://</span>.
+              </p>
+              <div class="table-wrap mt-4">
+                <div class="table-scroll">
+                  <table class="table-app">
+                    <thead>
+                      <tr>
+                        <th>Nuestro <span class="font-mono">data-icon</span></th>
+                        <th>Slug en lucide.dev</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td class="font-mono">check-circle</td><td class="font-mono text-ink-soft">circle-check</td></tr>
+                      <tr><td class="font-mono">play-circle</td><td class="font-mono text-ink-soft">circle-play</td></tr>
+                      <tr><td class="font-mono">alert-circle</td><td class="font-mono text-ink-soft">circle-alert</td></tr>
+                      <tr><td class="font-mono">alert-triangle</td><td class="font-mono text-ink-soft">triangle-alert</td></tr>
+                      <tr><td class="font-mono">help-circle</td><td class="font-mono text-ink-soft">circle-help</td></tr>
+                      <tr><td class="font-mono">refresh</td><td class="font-mono text-ink-soft">refresh-cw</td></tr>
+                      <tr><td class="font-mono">unlock</td><td class="font-mono text-ink-soft">lock-open</td></tr>
+                      <tr><td class="font-mono">logout</td><td class="font-mono text-ink-soft">log-out</td></tr>
+                      <tr><td class="text-ink-soft" colspan="2">El resto coincide con su slug.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <p class="meta mt-3">
+                Para agregar uno: buscá el slug en lucide.dev y <strong>redibujalo</strong> en este
+                lenguaje. No pegues el path oficial tal cual — la simplificación del set es
+                deliberada, y a 14 px el detalle de más es barro.
+              </p>
             </div>
           </div>
         </section>
@@ -521,7 +695,7 @@
             <span class="badge badge-info"><span class="icon icon-sm" data-icon="play"></span>En curso</span>
             <span class="badge badge-neutral">Disponible</span>
             <span class="badge badge-muted"><span class="icon icon-sm" data-icon="lock"></span>Bloqueado</span>
-            <span class="badge badge-warning">No rendida</span>
+            <span class="badge badge-warning">Pendiente</span>
             <span class="badge badge-error">No alcanzaste el umbral</span>
             <span class="badge badge-success"><span class="icon icon-sm" data-icon="award"></span>Certificado</span>
             <span class="badge badge-muted">Sin empezar</span>
@@ -880,6 +1054,11 @@
                     <td class="text-ink-soft">Le aplica la misma regla que al módulo: se lista con su aviso de plan y no cuenta para el progreso.</td>
                   </tr>
                   <tr>
+                    <td class="text-ink-soft">C-2</td>
+                    <td><strong>Persistencia del video visto</strong>. Las aprobaciones sobreviven a la navegación; los videos vistos, no.</td>
+                    <td class="text-ink-soft">Marcar un video al 80 % vale mientras dura la pantalla. Al volver, cuenta el avance del seed de la persona. Es límite del prototipo, no regla de producto.</td>
+                  </tr>
+                  <tr>
                     <td class="text-ink-soft">C-5</td>
                     <td><strong>Bancos de preguntas</strong> de <span class="font-mono">BAK-M40</span> a <span class="font-mono">BAK-M95</span>: son 50 preguntas por módulo de trabajo de contenido.</td>
                     <td class="text-ink-soft">Sortea sobre un banco de estructura del módulo, avisado en la antesala. Escrito y real: M00, M10, M20 y M30.</td>
@@ -898,6 +1077,26 @@
                     <td class="text-ink-soft">P07.6</td>
                     <td><strong>Mostrar las respuestas correctas</strong> al aprobar.</td>
                     <td class="text-ink-soft">No las muestra. Al desaprobar tampoco: solo marca la elegida y el sub-tema.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">D-1</td>
+                    <td><strong>Cuál es la métrica estrella</strong> del dashboard de agencia: ¿completitud o activación?</td>
+                    <td class="text-ink-soft">Pone el único acento de color en <span class="font-mono">Completado</span>. Se muda cambiando de ícono el <span class="font-mono">text-success-dark</span>. Si el negocio prioriza activación, va a <span class="font-mono">Con actividad</span>.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">D-2</td>
+                    <td><strong>El trofeo de «Tu puesto»</strong>: ¿toma acento cuando hay dato?</td>
+                    <td class="text-ink-soft">Queda neutral siempre. Una posición no es un logro que celebrar —pintar de verde un «6º de 6» es la semaforización que el producto ya decidió no hacer— y dos acentos en una pantalla se anulan.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">D-3</td>
+                    <td><strong>Formato del puesto</strong>: ¿posición, percentil («top 30 %») o tramo, y con delta?</td>
+                    <td class="text-ink-soft">Muestra la posición en una frase. El percentil pierde sentido con 6 personas, y el delta («subiste 1 lugar») necesita histórico que el mock no modela.</td>
+                  </tr>
+                  <tr>
+                    <td class="text-ink-soft">D-4</td>
+                    <td><strong>Las KPI cards como control</strong>: el fondo del filtro activo pinta un <span class="font-mono">div</span> que no recibe foco, y los cuatro botones se llaman «Ver».</td>
+                    <td class="text-ink-soft">Card tintada + <span class="font-mono">aria-pressed</span> en el botón + región viva que nombra el filtro. Convertir la card entera en <span class="font-mono">button</span> es la alternativa y cambia el orden de tabulación.</td>
                   </tr>
                 </tbody>
               </table>
@@ -942,5 +1141,55 @@
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/icons.js"></script>
     <script src="assets/js/ui.js"></script>
+    <script>
+      (function () {
+        "use strict";
+        /* La tabla se pinta desde `ACADEMIA.personas`: si se agrega una persona,
+           aparece acá sola. Una lista escrita a mano se desfasa. */
+        const DESTINOS = [
+          { archivo: "modulos.html", rotulo: "Módulos" },
+          { archivo: "certificaciones.html", rotulo: "Certificación" },
+          { archivo: "agencia.html", rotulo: "Mi agencia" },
+        ];
+
+        document.getElementById("tabla-personas").innerHTML = ACADEMIA.personas
+          .map(function (p) {
+            const activa = p.clave === ACADEMIA.persona.clave;
+            const enlaces = DESTINOS.map(function (d) {
+              return '<a href="' + d.archivo + "?reset=1&amp;u=" + p.clave + '">' + d.rotulo + "</a>";
+            }).join(' <span class="text-ink-soft" aria-hidden="true">·</span> ');
+
+            return (
+              "<tr>" +
+              "<td><span class=\"font-bold\">" + p.nombre + "</span>" +
+              (activa
+                ? ' <span class="badge badge-info">Estás acá</span>'
+                : "") +
+              '<span class="meta block font-mono">?u=' + p.clave + "</span></td>" +
+              "<td>" + ACADEMIA.agenciaDe(p).nombre +
+              '<span class="meta block">Plan ' + ACADEMIA.agenciaDe(p).plan + "</span></td>" +
+              '<td class="text-gray-700">' + p.resumen + "</td>" +
+              '<td class="text-sm">' + enlaces + "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+
+        /* Mismo criterio que la tabla de personas: la grilla sale de
+           `window.ICONS`, no de una lista escrita a mano que se desfasa al
+           agregar el ícono 37. */
+        document.getElementById("grilla-iconos").innerHTML = Object.keys(window.ICONS)
+          .map(function (nombre) {
+            return (
+              '<div class="flex flex-col items-center gap-2 rounded-md border border-line bg-white p-3 text-center">' +
+              '<span class="icon icon-lg text-indigo" data-icon="' + nombre + '"></span>' +
+              '<span class="meta font-mono break-all">' + nombre + "</span>" +
+              "</div>"
+            );
+          })
+          .join("");
+        renderIcons();
+      })();
+    </script>
   </body>
 </html>

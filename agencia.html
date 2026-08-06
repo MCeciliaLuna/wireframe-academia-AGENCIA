@@ -63,7 +63,7 @@
         <div class="flex w-full flex-col gap-2 lg:w-[360px]">
           <div class="flex items-baseline justify-between text-sm">
             <span class="font-bold">Avance agregado</span>
-            <span class="text-ink-soft" id="avance-pct"></span>
+            <span class="text-ink-soft tabular-nums" id="avance-pct"></span>
           </div>
           <div class="progress progress-lg"><span id="avance-barra" style="width: 0%"></span></div>
           <p class="meta">
@@ -73,42 +73,57 @@
         </div>
       </div>
 
+      <!-- Los iconos aceleran el reconocimiento de la metrica; el color no se
+           reparte. Una sola card lleva acento — "Completado", que es la que
+           celebra un logro — y va en el ICONO, no en el fondo: fondo y borde
+           son el canal del filtro activo (ver mostrarFiltro). "Sin empezar" va
+           en gris y nunca en ambar: alguien que recien entro no es un fallo.
+
+           Anatomia: [icono · boton] / label / valor. El icono NO va pegado al
+           label aunque sea el orden de lectura natural, porque a 375 px la
+           grilla es de 2 columnas y el label se queda con ~34 px: "Con
+           actividad" se recorta a "C...". En su propia linea tiene el ancho
+           completo de la card. A 1024 px el caso apretado es el mismo. -->
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div class="card flex flex-col gap-1 p-5" data-filtro-card="todos">
-          <div class="flex items-center justify-between gap-2">
-            <span class="eyebrow">Personas</span>
-            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="todos" aria-pressed="false">
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <span class="icon icon-sm text-ink-soft" data-icon="users"></span>
+            <button class="btn btn-ghost btn-sm shrink-0" type="button" data-filtro-btn="todos" aria-pressed="false">
               <span class="icon icon-sm" data-icon="eye"></span>Ver
             </button>
           </div>
-          <span class="text-h3" id="m-total"></span>
+          <span class="eyebrow">Personas</span>
+          <span class="text-h3 font-bold tabular-nums" id="m-total"></span>
         </div>
         <div class="card flex flex-col gap-1 p-5" data-filtro-card="activos">
-          <div class="flex items-center justify-between gap-2">
-            <span class="eyebrow">Con actividad</span>
-            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="activos" aria-pressed="false">
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <span class="icon icon-sm text-ink-soft" data-icon="activity"></span>
+            <button class="btn btn-ghost btn-sm shrink-0" type="button" data-filtro-btn="activos" aria-pressed="false">
               <span class="icon icon-sm" data-icon="eye"></span>Ver
             </button>
           </div>
-          <span class="text-h3" id="m-activos"></span>
+          <span class="eyebrow">Con actividad</span>
+          <span class="text-h3 font-bold tabular-nums" id="m-activos"></span>
         </div>
         <div class="card flex flex-col gap-1 p-5" data-filtro-card="completos">
-          <div class="flex items-center justify-between gap-2">
-            <span class="eyebrow">Completado</span>
-            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="completos" aria-pressed="false">
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <span class="icon icon-sm text-success-dark" id="icono-completos" data-icon="check-circle"></span>
+            <button class="btn btn-ghost btn-sm shrink-0" type="button" data-filtro-btn="completos" aria-pressed="false">
               <span class="icon icon-sm" data-icon="eye"></span>Ver
             </button>
           </div>
-          <span class="text-h3" id="m-completos"></span>
+          <span class="eyebrow">Completado</span>
+          <span class="text-h3 font-bold tabular-nums" id="m-completos"></span>
         </div>
         <div class="card flex flex-col gap-1 p-5" data-filtro-card="sin-empezar">
-          <div class="flex items-center justify-between gap-2">
-            <span class="eyebrow">Sin empezar</span>
-            <button class="btn btn-ghost btn-sm" type="button" data-filtro-btn="sin-empezar" aria-pressed="false">
+          <div class="mb-1 flex items-center justify-between gap-2">
+            <span class="icon icon-sm text-ink-soft" data-icon="clock"></span>
+            <button class="btn btn-ghost btn-sm shrink-0" type="button" data-filtro-btn="sin-empezar" aria-pressed="false">
               <span class="icon icon-sm" data-icon="eye"></span>Ver
             </button>
           </div>
-          <span class="text-h3" id="m-sin-empezar"></span>
+          <span class="eyebrow">Sin empezar</span>
+          <span class="text-h3 font-bold tabular-nums" id="m-sin-empezar"></span>
         </div>
       </div>
 
@@ -121,7 +136,13 @@
         data-filtro-card="ranking"
       >
         <div class="flex flex-col gap-1">
-          <span class="eyebrow">Tu puesto en <span data-user-agency></span></span>
+          <span class="flex items-center gap-2 text-ink-soft">
+            <!-- El trofeo queda neutro tambien cuando hay puesto: dos acentos
+                 en la misma pantalla se anulan entre si. El unico es el de
+                 "Completado". -->
+            <span class="icon icon-sm" data-icon="trophy"></span>
+            <span class="eyebrow">Tu puesto en <span data-user-agency></span></span>
+          </span>
           <span class="text-h3" id="puesto-valor"></span>
           <p class="meta" id="puesto-nota"></p>
         </div>
@@ -245,9 +266,23 @@
         const yo = rankeados.filter(function (e) { return e.esVos; })[0];
         const miPuesto = yo ? yo.posicion : null;
 
-        document.getElementById("puesto-valor").textContent = miPuesto
-          ? ACADEMIA.ordinal(miPuesto) + " de " + empleados.length
-          : "—";
+        const puestoValor = document.getElementById("puesto-valor");
+        if (miPuesto) {
+          puestoValor.className = "text-h3";
+          puestoValor.textContent =
+            "Estás en el " + ACADEMIA.ordinal(miPuesto) + " lugar del ranking";
+        } else {
+          /* El guión es un placeholder, no un error: se atenúa y se le pone
+             nombre para quien navega con lector de pantalla. El microcopy de
+             abajo hace el resto del trabajo.
+             Va en `ink-soft` y no en `ink-muted`: el gris más claro da 2.43:1
+             sobre la superficie de la card y no llega a AA ni como texto
+             grande. Sigue leyéndose atenuado contra el `ink` del valor real. */
+          puestoValor.className = "text-h3 text-ink-soft";
+          puestoValor.innerHTML =
+            '<span aria-hidden="true">—</span>' +
+            '<span class="sr-only">Sin puesto todavía</span>';
+        }
         document.getElementById("puesto-nota").textContent = miPuesto
           ? "Por módulos aprobados. Desempata quien llegó antes."
           : "Vas a entrar al ranking cuando apruebes tu primer módulo.";
@@ -260,6 +295,14 @@
           ["m-activos", "m-completos"].forEach(function (id) {
             document.getElementById(id).classList.add("text-ink-soft");
           });
+        }
+
+        /* El acento verde celebra un logro. Con cero recorridos completos no
+           hay logro, y el ícono vuelve al gris del resto: es el mismo criterio
+           anti-semáforo que mantiene "Sin empezar" en neutro. Cubre también el
+           `?state=empty` de arriba. */
+        if (completos === 0) {
+          document.getElementById("icono-completos").classList.remove("text-success-dark");
         }
 
         /* `data-orden` da el criterio numérico para ordenar el último acceso,
@@ -297,14 +340,14 @@
               '<span class="font-bold">' + e.nombre + "</span>" +
               (e.esVos ? '<span class="meta"> (vos)</span>' : "") +
               "</td>" +
-              "<td>" + e.aprobados + " de " + total +
+              '<td class="tabular-nums">' + e.aprobados + " de " + total +
               (e.certificado
                 ? ' <span class="badge badge-success col-plain"><span class="icon icon-sm" data-icon="award"></span>Certificado</span>'
                 : "") +
               "</td>" +
               '<td><div class="flex items-center gap-3">' +
               '<div class="progress progress-sm min-w-0 flex-1' + (pct === 100 ? " progress-complete" : "") + '"><span style="width:' + pct + '%"></span></div>' +
-              '<span class="w-10 shrink-0 text-right text-xs">' + pct + " %</span>" +
+              '<span class="w-10 shrink-0 text-right text-xs tabular-nums">' + pct + " %</span>" +
               "</div></td>" +
               '<td class="text-ink-soft">' + (e.ultimoAcceso || "Sin actividad") + "</td>" +
               '<td class="col-ranking">' + estado + "</td>" +

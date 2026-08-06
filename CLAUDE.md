@@ -14,9 +14,12 @@ negocio.
 **Los módulos, secciones y videos son los reales del mapa de contenido**, no inventados: 11 módulos
 BAK, 31 secciones y 55 videos con su ID permanente `BAK-Mxx.yyy`, tomados de
 `ACADEMIA-BACKLOG/Estrategia_Grabado_Academia_SIGMMA_mapa_pareto_v2.md.pdf`, con el agrupamiento en
-secciones de `Cotejo_Wireframe_Academia_SIGMMA.md` (Parte B). Sí son ficticias las personas, la
-agencia, las duraciones de los videos, las notas y los bancos de preguntas. Todo vive en
+secciones de `Cotejo_Wireframe_Academia_SIGMMA.md` (Parte B). Sí son ficticias las personas, las dos
+agencias, las duraciones de los videos, las notas y los bancos de preguntas. Todo vive en
 `assets/js/mock-data.js`.
+
+Se recorre con **cuatro personas de prueba** (`?u=`), una por situación: en curso, recorrido
+terminado, sin ninguna interacción, y plan Business.
 
 Documentos de referencia, fuera de este repo:
 
@@ -94,7 +97,8 @@ con query params. Esto replica cómo se comportarían en el producto real.
 | `?ver=` | `ranking` | Vista de ranking del equipo en `agencia.html` |
 | `?m=` | `0`, `10`, `20` … `95` | Módulo. Es el número del mapa, **no** la posición en el recorrido |
 | `?v=` | `BAK-M20.030` | Video, por ID permanente. Alcanza solo: el módulo se deduce del video |
-| `?reset=1` | — | Vuelve el prototipo al estado inicial |
+| `?u=` | `lucia`, `martin`, `nicolas`, `sofia` | Persona de prueba. Se persiste: alcanza pasarla una vez |
+| `?reset=1` | — | Vuelve el prototipo al estado inicial de las cuatro personas |
 
 **Nunca leas `?m=` a mano.** Usá `UI.moduloDeLaUrl()`: el primer módulo del recorrido tiene `id: 0`
 (`BAK-M00`), así que cualquier `Number(UI.param("m") || 30)` suelto lo trataría como ausente. Sin
@@ -111,7 +115,7 @@ No hay módulos ES (romperían `file://`). Cada archivo expone un global vía II
 
 | Archivo | Global | Rol |
 |---|---|---|
-| `mock-data.js` | `ACADEMIA` | Datos + derivados (`recorrido()`, `posicion(id)`, `estadoEfectivo(id)`, `secciones(id)`, `banco(id)`) |
+| `mock-data.js` | `ACADEMIA` | Datos + derivados (`recorrido()`, `posicion(id)`, `estadoEfectivo(id)`, `secciones(id)`, `banco(id)`) y la persona activa (`persona`, `agencia`, `claveStorage()`) |
 | `icons.js` | `ICONS`, `renderIcons()` | Mapa de paths SVG + hidratación |
 | `ui.js` | `UI` | `param()`, `moduloDeLaUrl()`, `showModal()`, `avisoPantalla()`, `bloquearModulo()`, `sessionExpired()` |
 | `quiz.js` | `Quiz` | Máquina de estados de la evaluación (solo lógica, sin DOM) |
@@ -204,20 +208,49 @@ Está anotado como decisión a confirmar en la tabla de `design-system.html`.
 Para contar, usá siempre `videosAplicables(id)` / `vistosDelModulo(id)` / `progresoModulo(id)`, no
 `videosDelModulo(id)` (que devuelve todos, incluido el que el plan no habilita).
 
-### Aprobaciones que persisten
+### Las cuatro personas de prueba
+
+El avance de una sola usuaria no puede mostrar a la vez el recorrido en curso, el terminado y el que
+no empezó. Por eso hay cuatro personas, y **el contenido no sabe nada del avance**: en `modulos` todos
+los módulos arrancan `bloqueado` y todos los videos sin ver. Lo que decide el estado es el `seed` de
+la persona activa, que se aplica encima al arrancar.
+
+| `?u=` | Persona | Agencia · plan | Cómo llega |
+|---|---|---|---|
+| `lucia` *(default)* | Lucía Fernández | Viajes del Sur · Professional | `BAK-M00` y `BAK-M10` aprobados, `BAK-M20` en curso (2 de 6 vistos), `BAK-M30`–`BAK-M80` bloqueados por secuencia, `BAK-M90`/`BAK-M95` con candado de plan |
+| `martin` | Martín Ruiz | Viajes del Sur · Professional | Los 9 aprobados, los 45 videos aplicables vistos, las 9 Meets pedidas, certificado emitido. `moduloActual()` devuelve `null` |
+| `nicolas` | Nicolás Vera | Viajes del Sur · Professional | Nada: solo `BAK-M00` abierto, sin puesto en el ranking, y su fila del plantel en «Sin actividad» |
+| `sofia` | Sofía Bianchi | Andes Receptivo · **Business** | Recorrido de **11**: `BAK-M90` y `BAK-M95` entran con ordinales 10 y 11, y `BAK-M80.030` deja de tener candado |
+
+Son las mismas personas del plantel de su agencia (`empleadoId`): entrar como alguien mueve el flag
+`esVos` a su fila. Las filas de las cuatro se derivan de su seed, no se cargan a mano — si no, con
+quién estás logueada cambiaría los números de las demás.
+
+**El plan es de la agencia, no de la persona.** Por eso Sofía no está en Viajes del Sur: `agencias`
+tiene dos, cada una con su plan y su plantel, y `usuario.perfil` sale de ahí.
+
+Al agregar una persona alcanza con sumarla a `personas`: la tabla de `design-system.html` se pinta
+desde `ACADEMIA.personas` y no hay que tocarla.
+
+### Aprobaciones que persisten, por persona
 
 El prototipo no tiene backend, pero el desbloqueo no se puede demostrar si aprobar se olvida al
-navegar. `mock-data.js` guarda las aprobaciones en `localStorage` (clave `academia:aprobados`) y las
-aplica sobre el mock al arrancar. Consecuencias al trabajar acá:
+navegar. `mock-data.js` guarda las aprobaciones en `localStorage` y las aplica sobre el seed al
+arrancar. Consecuencias al trabajar acá:
 
-- **`?reset=1` en cualquier página** vuelve el prototipo al estado inicial (borra aprobaciones e
-  intentos de quiz). Usalo antes de comparar contra el wireframe o de una demo.
+- **Toda clave cuelga de la persona** y la compone `ACADEMIA.claveStorage(sufijo)`:
+  `academia:aprobados:<clave>`, `academia:intento:<moduloId>:<clave>`. Aprobar como una no le puede
+  ensuciar el avance a otra. No compongas la clave a mano.
+- La persona activa vive en `academia:persona`, y se resuelve **antes que nada** en el IIFE: del
+  plan de su agencia sale el recorrido.
+- **`?reset=1` en cualquier página** borra el avance de las cuatro y vuelve a Lucía. `?u=` se lee
+  después del reset, así que `?u=nicolas&reset=1` entra limpio **como Nicolás**. Usalo antes de
+  comparar contra el wireframe o de una demo.
 - Solo un intento **realmente terminado** registra la aprobación (en `terminar()`, no en
   `pintarResultado()`): los deep links `?phase=result` son para mirar la pantalla y no ensucian el
   estado.
-- El estado inicial es: perfil **Professional**, `BAK-M00` y `BAK-M10` aprobados, `BAK-M20` en curso
-  (2 de 6 vistos), `BAK-M30` a `BAK-M80` bloqueados por secuencia, y `BAK-M90` / `BAK-M95` con candado
-  de plan.
+- Los videos vistos **no** persisten entre páginas: al volver, cuenta el avance del seed. Está
+  anotado como límite del prototipo en la tabla de decisiones abiertas.
 
 ### Progreso: por usuario, agregado por agencia (Opción C)
 
@@ -228,7 +261,7 @@ distintos se leen como un error de la pantalla.
 La regla de agregación es explícita: **promedio de módulos aprobados por persona sobre los del
 recorrido del plan**, y está rotulada en la propia pantalla. Toda base de cálculo —progreso general,
 certificado, promedio de la agencia— usa `ACADEMIA.total()`, que son los módulos **del recorrido**
-(9 con Professional), nunca los 11.
+(9 con Professional, 11 con Business), nunca los 11 fijos.
 
 ### Bancos de preguntas: cuatro escritos, siete de estructura
 
@@ -309,8 +342,39 @@ let mal=[]; A.modulos.forEach(m=>{const n=m.secciones.map(x=>x.titulo);
   if(A.banco(m.id).length<=A.quizConfig.preguntasPorIntento) mal.push(m.codigo+" banco chico");
   A.banco(m.id).forEach(q=>{ if(n.indexOf(q.subtema)<0) mal.push(q.id+" subtema");
     if(!(q.correcta>=0&&q.correcta<q.opciones.length)) mal.push(q.id+" rango"); })});
-console.log(mal.length?mal:"integridad de bancos ok");'
+console.log(mal.length?mal:"integridad de bancos ok");
+const ids=new Set(A.modulos.map(m=>m.id)), vids=new Set();
+A.modulos.forEach(m=>m.secciones.forEach(x=>x.videos.forEach(y=>vids.add(y.id))));
+let seeds=[]; A.personas.forEach(p=>{ if(!A.agenciaDe(p)) seeds.push(p.clave+" agencia");
+  p.seed.aprobados.forEach(r=>{ if(!ids.has(r.id)) seeds.push(p.clave+" módulo "+r.id);
+    if(!(r.nota>=0&&r.nota<=10)) seeds.push(p.clave+" nota "+r.nota); });
+  Object.keys(p.seed.videos).forEach(id=>{ if(!vids.has(id)) seeds.push(p.clave+" video "+id); })});
+console.log(seeds.length?seeds:"integridad de seeds ok");'
 ```
+
+### Las cuatro personas
+
+Con el mismo shim de Node, pasando `search: "?u=<clave>"` y un `localStorage` de verdad (un objeto),
+se recorren las cuatro sin navegador:
+
+```bash
+for u in lucia martin nicolas sofia; do node -e '
+const u=process.argv[1], store={};
+global.window={location:{search:"?u="+u},localStorage:{
+  getItem:k=>store[k]||null,setItem:(k,v)=>{store[k]=v},removeItem:k=>{delete store[k]}}};
+require("./assets/js/mock-data.js"); const A=window.ACADEMIA;
+const vistos=A.modulos.reduce((a,m)=>a+A.vistosDelModulo(m.id),0);
+console.log(u.padEnd(8),"|",A.usuario.perfil.padEnd(12),"| aprob "+A.aprobados()+"/"+A.total(),
+ "| vistos "+vistos, "| meets "+A.modulos.filter(m=>m.meetSolicitada).length,
+ "| actual "+(A.moduloActual()?A.moduloActual().codigo:"null"),
+ "| ords ["+A.recorrido().map(m=>A.posicion(m.id)).join(",")+"]");' $u; done
+```
+
+Tiene que dar: `lucia` 2/9 y 12 vistos · `martin` 9/9, 45 vistos, 9 meets y `moduloActual()` en
+`null` · `nicolas` 0/9 y 0 vistos · `sofia` 3/11 con ordinales de 1 a 11.
+
+Y el aislamiento, que es lo que se rompe fácil: aprobar como una persona, cambiar de `?u=` y ver que
+la otra no se movió; `?u=nicolas&reset=1` entra limpio **como Nicolás**; `?u=` inválido cae en Lucía.
 
 ### Recorrido en el navegador
 
@@ -322,6 +386,11 @@ Siempre arrancando con `?reset=1`. Lo mínimo: las **cuatro** guardas de módulo
 listado vayan de 1 a 9 **sin huecos** y las dos cards fuera de plan no tengan ordinal; que `?m=40`
 muestre la sección 3 con el video `050` antes del `040`; que `?m=80` liste el dashboard de KPIs sin
 link; y que aprobar `BAK-M80` cierre el recorrido **sin** ofrecer `BAK-M90`.
+
+Con `?u=`: que `martin` tenga el certificado descargable (`btn-cta`) y vaya 1º en el ranking; que
+`nicolas` diga «Vas a entrar al ranking cuando apruebes tu primer módulo»; que `sofia` vea `?m=90`
+bloqueado por **secuencia** y no por plan; y que el plantel de la agencia dé los mismos números
+mirado desde cualquiera de las cuatro.
 
 Más: recorrer los deep links de `design-system.html` y compararlos contra el wireframe; revisar a
 375 / 768 / 1024 px sin scroll horizontal; y probar el recorrido de teclado (foco visible, `Esc` en

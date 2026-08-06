@@ -167,7 +167,7 @@
         document.querySelector("[data-videos-barra]").style.width = pct + "%";
         document.querySelector("[data-estado-evaluacion]").innerHTML = aprobado
           ? '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Aprobada ' + m.nota + "/10</span>"
-          : '<span class="badge badge-warning">No rendida</span>';
+          : '<span class="badge badge-warning">Pendiente</span>';
         document.getElementById("evaluacion-cta").href = "evaluacion.html?m=" + m.id;
         if (aprobado) {
           document.getElementById("evaluacion-cta").textContent = "Rehacer la evaluación";

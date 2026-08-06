@@ -163,11 +163,11 @@
 
           <!-- Navegación entre videos -->
           <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
-            <a id="anterior" class="btn btn-bordered btn-sm max-w-full" href="#">
-              <span class="icon" data-icon="arrow-left"></span><span class="truncate" data-titulo>Anterior</span><span class="icon" data-icon="eye" data-ojo hidden></span>
+            <a id="anterior" class="btn btn-bordered btn-sm" href="#">
+              <span class="icon" data-icon="arrow-left"></span><span data-titulo>Anterior</span>
             </a>
-            <a id="siguiente" class="btn btn-primary btn-sm max-w-full" href="#">
-              <span class="icon" data-icon="eye" data-ojo hidden></span><span class="truncate" data-titulo>Siguiente</span><span class="icon" data-icon="arrow-right"></span>
+            <a id="siguiente" class="btn btn-primary btn-sm" href="#">
+              <span data-titulo>Siguiente</span><span class="icon" data-icon="arrow-right"></span>
             </a>
           </div>
         </div>
@@ -232,30 +232,24 @@
         document.querySelector("[data-volver]").href = "modulo.html?m=" + moduloId;
         document.getElementById("evaluacion-lateral").href = "evaluacion.html?m=" + moduloId;
 
-        /* Navegación. En el primer video no hay anterior; en el último el CTA
-           deja de ser "Siguiente" y pasa a ser la evaluación. El ícono de ojo
-           solo acompaña al título cuando este lleva a un video real: adelanta
-           que ese es el próximo contenido a ver. */
+        /* Navegación. Los rótulos son fijos —«Anterior» y «Siguiente»—: el
+           título del video que viene ya se lee en la lista lateral, y acá
+           haría el botón largo e impredecible. En el primer video no hay
+           anterior; en el último el CTA deja de ser «Siguiente» y pasa a ser
+           la evaluación. */
         const anterior = document.getElementById("anterior");
         const siguiente = document.getElementById("siguiente");
         if (indice === 0) {
           anterior.setAttribute("aria-disabled", "true");
           anterior.removeAttribute("href");
-          anterior.querySelector("[data-titulo]").textContent = "Anterior";
-          anterior.querySelector("[data-ojo]").hidden = true;
         } else {
           anterior.href = "video.html?v=" + videos[indice - 1].id + "&m=" + moduloId;
-          anterior.querySelector("[data-titulo]").textContent = videos[indice - 1].titulo;
-          anterior.querySelector("[data-ojo]").hidden = false;
         }
         if (indice === videos.length - 1) {
           siguiente.href = "evaluacion.html?m=" + moduloId;
           siguiente.querySelector("[data-titulo]").textContent = "Hacer la evaluación";
-          siguiente.querySelector("[data-ojo]").hidden = true;
         } else {
           siguiente.href = "video.html?v=" + videos[indice + 1].id + "&m=" + moduloId;
-          siguiente.querySelector("[data-titulo]").textContent = videos[indice + 1].titulo;
-          siguiente.querySelector("[data-ojo]").hidden = false;
         }
 
         /* Sidebar */

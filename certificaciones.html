@@ -124,11 +124,27 @@
     <script>
       (function () {
         "use strict";
-        const completo = UI.param("state") === "complete";
+        /* `?state=complete` simula el recorrido terminado sobre el avance real,
+           para poder mirar la pantalla sin aprobar nueve evaluaciones. Pero el
+           certificado se emite por el avance, no por el deep link: una persona
+           que efectivamente terminó lo tiene igual. */
+        const simulado = UI.param("state") === "complete";
         const total = ACADEMIA.total();
-        const aprobados = completo ? total : ACADEMIA.aprobados();
+        const aprobados = simulado ? total : ACADEMIA.aprobados();
+        const completo = aprobados === total;
         const pct = Math.round((aprobados / total) * 100);
         const faltan = total - aprobados;
+
+        /* La fecha de emisión es la de la última aprobación, no la de hoy: el
+           certificado no se re-emite cada vez que se abre la pantalla. En la
+           variante simulada no hay tal fecha, así que ahí sí va hoy. */
+        const ultimaPropia = ACADEMIA.recorrido().reduce(function (u, m) {
+          return !u || m.aprobadoEn > u ? m.aprobadoEn : u;
+        }, null);
+        const emitidoEl =
+          !simulado && ultimaPropia
+            ? ACADEMIA.fechaCorta(ultimaPropia)
+            : ACADEMIA.ahoraLargo().slice(0, 10);
 
         const badge = document.getElementById("cert-badge");
         const texto = document.getElementById("cert-texto");
@@ -147,7 +163,7 @@
             '<span class="badge badge-success"><span class="icon icon-sm" data-icon="check"></span>Disponible</span>';
           texto.innerHTML =
             "Completaste los <strong>" + total + " módulos</strong> del recorrido del plan " +
-            ACADEMIA.usuario.perfil + ". Emitido el " + ACADEMIA.ahoraLargo().slice(0, 10) + ".";
+            ACADEMIA.usuario.perfil + ". Emitido el " + emitidoEl + ".";
           sello.className =
             "grid h-28 w-24 shrink-0 place-items-center rounded-lg text-white shadow-glow";
           sello.style.backgroundImage =
@@ -172,8 +188,10 @@
            recorrido terminado, así que el ranking se recalcula sobre esa
            variante: si no, la pantalla diría que completó todo y seguiría 5.ª.
            La aprobación se fecha hoy, así que queda detrás de quien terminó
-           antes — el mismo criterio de desempate que en `agencia.html`. */
-        const plantel = completo
+           antes — el mismo criterio de desempate que en `agencia.html`.
+           Solo la variante simulada necesita esto: si el recorrido se terminó
+           de verdad, el plantel ya trae el número y la fecha que corresponden. */
+        const plantel = simulado
           ? ACADEMIA.empleados.map(function (e) {
               return e.esVos
                 ? Object.assign({}, e, {
