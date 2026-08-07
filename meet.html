@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Solicitar Meet con soporte · Academia SIGMMA</title>
-    <meta name="description" content="Pedí una reunión de 30 minutos con el equipo de soporte para el módulo que aprobaste." />
+    <title>Coordinar Meet con Soporte · Academia SIGMMA</title>
+    <meta name="description" content="Agendá la Meet de 30 minutos con Soporte para las dudas que tu equipo dejó en la cola del módulo." />
     <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Regular.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="preload" href="assets/fonts/sofia-sans/SofiaSans-Bold.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
     <link rel="stylesheet" href="assets/css/academia.css" />
@@ -47,63 +47,86 @@
     <!-- /app-shell -->
 
     <main id="contenido" class="container-app page">
-      <div class="mx-auto w-full max-w-narrow">
-        <!-- Formulario -->
-        <section id="form-meet" class="flex flex-col gap-6 rounded-xl border border-line bg-white p-6 md:p-8">
+      <div class="mx-auto flex w-full max-w-narrow flex-col gap-6">
+        <nav aria-label="Ruta">
+          <ol class="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
+            <li><a href="modulos.html" class="hover:underline">Módulos</a></li>
+            <li aria-hidden="true" class="text-ink-muted">/</li>
+            <li><a href="#" id="volver-modulo" class="hover:underline" data-modulo-titulo></a></li>
+            <li aria-hidden="true" class="text-ink-muted">/</li>
+            <li class="font-bold text-gray-800" aria-current="page">Coordinar Meet</li>
+          </ol>
+        </nav>
+
+        <!-- Agendado: cola + turnos. Lo pinta el script, que tiene que resolver
+             antes las tres precondiciones (coordinador, plan, cupo abierto). -->
+        <section id="agendar" class="flex flex-col gap-6" hidden>
           <div class="flex items-start gap-4">
             <span class="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-info-bg text-primary">
               <span class="icon icon-lg" data-icon="message"></span>
             </span>
             <div>
-              <h1 class="text-h3">Solicitar Meet con soporte</h1>
+              <h1 class="text-h3">Coordinar Meet con Soporte</h1>
               <p class="mt-1 text-gray-700">
                 Módulo <span class="font-bold" data-modulo-titulo></span>
               </p>
             </div>
           </div>
 
-          <p class="text-sm text-gray-700">
-            Son 30 minutos con el equipo de soporte para revisar dudas de este módulo. Podés pedir
-            una reunión por cada módulo que apruebes.
-          </p>
+          <div class="flex flex-col gap-3 rounded-xl border border-line bg-white p-6">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <h2 class="text-h5">Dudas en la agenda</h2>
+              <span class="meta" id="cola-resumen"></span>
+            </div>
+            <p class="hint">
+              Es la agenda de la reunión: Soporte la recibe con el turno. Son las dudas que tu equipo
+              dejó registradas de este módulo.
+            </p>
+            <div id="cola"></div>
+          </div>
 
-          <form class="flex flex-col gap-5" id="meet-form" novalidate>
-            <div class="field">
-              <label class="label" for="dudas">
-                Contanos qué dudas querés revisar
-                <span class="label-optional">(opcional, pero ayuda a preparar la reunión)</span>
-              </label>
-              <textarea
-                class="textarea"
-                id="dudas"
-                name="dudas"
-                maxlength="500"
-                placeholder="Ej: no me quedó claro cómo aplicar un saldo a favor en una reemisión…"
-              ></textarea>
-              <div class="flex flex-wrap justify-between gap-2">
-                <span class="hint">Se envía junto con tu nombre, tu agencia y el módulo.</span>
-                <span class="hint" data-counter-for="dudas">0 / 500</span>
-              </div>
+          <form class="flex flex-col gap-6" id="form-agendar" novalidate>
+            <div class="flex flex-col gap-3 rounded-xl border border-line bg-white p-6">
+              <h2 class="text-h5">Elegí el turno</h2>
+              <p class="hint">
+                Son 30 minutos con el equipo de Soporte. Todos los horarios están en hora de
+                Argentina (ART, UTC-3).
+              </p>
+              <div id="turnos" class="flex flex-col gap-5" role="radiogroup" aria-labelledby="turnos-label"></div>
+              <span class="sr-only" id="turnos-label">Turnos disponibles</span>
+              <span class="error-text" id="turno-error" hidden>Elegí un turno para poder confirmar.</span>
             </div>
 
+            <div class="flex flex-col gap-3 rounded-xl border border-line bg-white p-6">
+              <h2 class="text-h5">Quiénes participan</h2>
+              <p class="hint">
+                Vienen precargadas las personas que dejaron dudas. Soporte les avisa por mail.
+              </p>
+              <div id="asistentes" class="flex flex-col gap-2"></div>
+            </div>
+
+            <p class="alert alert-error text-sm" id="agendar-error" hidden>
+              <span class="icon" data-icon="alert-circle"></span>No pudimos confirmar el turno. Probá
+              de nuevo en un momento.
+            </p>
+
             <div class="flex flex-wrap items-center gap-3 border-t border-line pt-5">
-              <button class="btn btn-primary btn-lg" type="submit" id="enviar">Enviar solicitud</button>
+              <button class="btn btn-primary btn-lg" type="submit" id="confirmar">Confirmar la Meet</button>
               <a class="link-quiet" href="modulo.html" id="cancelar">Cancelar</a>
             </div>
           </form>
         </section>
 
-        <!-- Confirmación in-place: no navega, reemplaza el contenido del panel.
-             Es el patrón heredado del sitio y funciona bien acá. -->
-        <section id="confirmacion" class="animate-enter flex flex-col items-start gap-5 rounded-xl border border-success-line bg-white p-6 md:p-8" hidden>
-          <span class="grid h-14 w-14 place-items-center rounded-full bg-success-dark text-white">
+        <!-- Ya agendada: el coordinador puede ver el turno o cancelarlo. -->
+        <section id="agendada" class="flex flex-col items-start gap-5 rounded-xl border border-info-line bg-white p-6 md:p-8" hidden>
+          <span class="grid h-14 w-14 place-items-center rounded-full bg-primary text-white">
             <span class="icon icon-xl" data-icon="check"></span>
           </span>
           <div>
-            <h1 class="text-h3">Recibimos tu solicitud</h1>
+            <h1 class="text-h3" id="agendada-titulo">La Meet está agendada</h1>
             <p class="mt-2 text-gray-700">
-              Soporte te va a escribir a <span class="font-bold" data-user-email></span> para
-              coordinar el horario.
+              Soporte recibió la agenda con las dudas de tu equipo. Les avisamos por mail a quienes
+              participan.
             </p>
           </div>
           <dl class="w-full overflow-hidden rounded-xl border border-line bg-surface text-sm">
@@ -111,88 +134,294 @@
               <dt class="text-ink-soft">Módulo</dt>
               <dd class="font-bold" data-modulo-titulo></dd>
             </div>
+            <div class="flex justify-between gap-4 border-b border-line px-4 py-3">
+              <dt class="text-ink-soft">Turno</dt>
+              <dd class="font-bold" id="agendada-turno"></dd>
+            </div>
             <div class="flex justify-between gap-4 px-4 py-3">
-              <dt class="text-ink-soft">Enviada</dt>
-              <dd class="font-bold" id="enviada-en"></dd>
+              <dt class="text-ink-soft">Dudas en la agenda</dt>
+              <dd class="font-bold" id="agendada-dudas"></dd>
             </div>
           </dl>
-          <p class="hint">
-            Una solicitud por módulo. Cuando vuelvas al módulo vas a ver la fecha en la que la
-            pediste.
-          </p>
-          <a class="btn btn-primary btn-lg" href="modulo.html" id="volver">Volver al módulo</a>
+          <div class="flex flex-wrap items-center gap-3">
+            <a class="btn btn-primary" href="modulo.html" id="agendada-volver">Volver al módulo</a>
+            <button class="btn btn-bordered" type="button" data-modal-open="modal-cancelar" id="agendada-cancelar">
+              Cancelar la Meet
+            </button>
+          </div>
         </section>
       </div>
     </main>
 
+    <!-- Cancelar es destructivo para todo el equipo, no solo para el coordinador:
+         lleva paso de verificación, como el resto de las acciones sin vuelta. -->
+    <div class="modal" id="modal-cancelar" role="dialog" aria-modal="true" aria-labelledby="mc-titulo" hidden>
+      <div class="modal-overlay"></div>
+      <div class="modal-panel">
+        <span class="placeholder-icon bg-warning-bg text-warning-dark"><span class="icon icon-lg" data-icon="alert-circle"></span></span>
+        <h2 class="mt-4 text-h4" id="mc-titulo">¿Querés cancelar la Meet agendada?</h2>
+        <p class="mt-2 text-gray-700">
+          Las dudas vuelven a la cola y vas a poder agendar otro turno. Avisale al equipo: ya tienen
+          el horario.
+        </p>
+        <div class="mt-6 flex flex-col-reverse gap-2.5 md:flex-row md:justify-end">
+          <button class="btn btn-bordered" type="button" id="mc-cancelar">Sí, cancelar la Meet</button>
+          <button class="btn btn-primary" type="button" data-modal-close data-autofocus>Dejarla como está</button>
+        </div>
+      </div>
+    </div>
+
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/icons.js"></script>
     <script src="assets/js/ui.js"></script>
+    <script src="assets/js/meet.js"></script>
     <script>
       (function () {
         "use strict";
         const modulo = UI.moduloDeLaUrl();
         const moduloId = modulo.id;
 
-        /* Guarda de acceso: la Meet de un módulo que la usuaria no puede abrir
-           tampoco se puede pedir. Era la única de las cuatro pantallas de módulo
-           sin la guarda, y la URL es adivinable. */
-        if (UI.bloquearModulo(modulo)) return;
+        document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
+          el.textContent = modulo.titulo;
+        });
+        document.getElementById("volver-modulo").href = "modulo.html?m=" + moduloId;
+        document.getElementById("cancelar").href = "modulo.html?m=" + moduloId;
+        document.getElementById("agendada-volver").href = "modulo.html?m=" + moduloId;
 
-        /* Precondición propia de esta pantalla: la Meet se habilita al aprobar
-           el módulo. Un módulo accesible pero todavía sin aprobar no bloquea el
-           acceso, pero no tiene Meet que pedir. */
-        if (modulo.estado !== "aprobado") {
+        function alModulo(texto) {
+          return '<a class="btn btn-primary" href="modulo.html?m=' + moduloId + '">' + texto + "</a>";
+        }
+
+        /* Guarda de acceso, con LA excepción del producto: el plan de la agencia
+           sí bloquea —un módulo fuera del plan no puede tener cola, porque nadie
+           de la agencia puede aprobarlo—, pero la secuencia no. El coordinador
+           agenda por su rol y las dudas son de gente que sí aprobó el módulo;
+           exigirle su propio avance dejaría la cola sin nadie que la atienda.
+           Es la única pantalla que la aplica así. */
+        if (UI.bloquearModulo(modulo, { ignorarSecuencia: ACADEMIA.esCoordinador() })) return;
+
+        /* Precondición de rol. */
+        if (!ACADEMIA.esCoordinador()) {
+          const coord = ACADEMIA.coordinador();
           UI.avisoPantalla({
-            title: "Meet no habilitada",
-            titulo: "Todavía no hay Meet para este módulo",
+            title: "Meet del equipo",
+            titulo: "La Meet del módulo la agenda el coordinador",
             icono: "message",
             texto:
-              "La reunión de 30 minutos con soporte se habilita cuando aprobás la evaluación de <strong>" +
-              modulo.titulo +
-              "</strong>. Es una por módulo aprobado.",
-            acciones:
-              '<a class="btn btn-primary" href="evaluacion.html?m=' + moduloId +
-              '">Hacer la evaluación</a>' +
-              '<a class="btn btn-bordered" href="modulo.html?m=' + moduloId +
-              '">Volver al módulo</a>',
+              "Las dudas de <strong>" + modulo.titulo + "</strong> se juntan en una cola de " +
+              ACADEMIA.agencia.nombre + ", y " +
+              (coord ? "<strong>" + coord.nombre + "</strong>" : "el coordinador del equipo") +
+              " agenda una única Meet con Soporte para todo el equipo.",
+            nota: "Desde el módulo podés dejar tu duda para que entre en esa agenda.",
+            acciones: alModulo("Volver al módulo"),
           });
           return;
         }
 
-        document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
-          el.textContent = modulo.titulo;
-        });
-        document.getElementById("cancelar").href = "modulo.html?m=" + moduloId;
-        document.getElementById("volver").href = "modulo.html?m=" + moduloId + "&meet=solicitada";
+        /* Precondición de cupo: sin cola no hay nada que agendar, y con la Meet
+           ya realizada el cupo del módulo se consumió. */
+        const cupoInicial = ACADEMIA.cupoMeet(moduloId);
 
-        const form = document.getElementById("meet-form");
-        const enviar = document.getElementById("enviar");
-
-        function mostrarConfirmacion(conFoco) {
-          document.getElementById("enviada-en").textContent = ACADEMIA.ahoraLargo() + " h";
-          document.getElementById("form-meet").hidden = true;
-          const ok = document.getElementById("confirmacion");
-          ok.hidden = false;
-          if (conFoco) {
-            const titulo = ok.querySelector("h1");
-            titulo.setAttribute("tabindex", "-1");
-            titulo.focus();
-          }
+        if (cupoInicial.estado === "sin-lugares") {
+          UI.avisoPantalla({
+            title: "Sin dudas en la cola",
+            titulo: "Todavía no hay dudas de este módulo",
+            icono: "message",
+            texto:
+              "Nadie de tu equipo dejó dudas de <strong>" + modulo.titulo +
+              "</strong>. Cuando haya al menos una, vas a poder agendar la Meet con Soporte.",
+            acciones: alModulo("Volver al módulo") +
+              '<a class="btn btn-bordered" href="agencia.html">Ver las colas del equipo</a>',
+          });
+          return;
         }
 
-        form.addEventListener("submit", function (event) {
-          event.preventDefault();
-          /* El textarea es opcional, así que el botón está siempre habilitado. */
-          UI.loading(enviar, true);
+        if (cupoInicial.estado === "consumido") {
+          UI.avisoPantalla({
+            title: "Meet ya realizada",
+            titulo: "La Meet de este módulo ya se realizó",
+            icono: "check",
+            texto:
+              "Fue el <strong>" + ACADEMIA.fechaCorta(cupoInicial.meet.inicioISO) +
+              "</strong>, con " + Meet.plural(cupoInicial.dudas.length, "duda", "dudas") +
+              " en la agenda. Hay una Meet por módulo para toda la agencia.",
+            nota: "El cupo se vuelve a habilitar si el módulo recibe contenido nuevo.",
+            acciones: alModulo("Volver al módulo"),
+          });
+          return;
+        }
+
+        /* -- Pintado ------------------------------------------------------- */
+        const secAgendar = document.getElementById("agendar");
+        const secAgendada = document.getElementById("agendada");
+
+        function pintarCola(cupo) {
+          document.getElementById("cola-resumen").textContent = Meet.plural(
+            cupo.dudas.length, "duda", "dudas"
+          );
+          /* El coordinador ve el texto de todas: la agenda es suya de preparar. */
+          document.getElementById("cola").innerHTML = Meet.listaDudas(cupo.dudas, true);
+        }
+
+        function pintarAgendada(cupo) {
+          secAgendar.hidden = true;
+          secAgendada.hidden = false;
+          document.getElementById("agendada-turno").textContent = Meet.turnoTexto(cupo.meet);
+          document.getElementById("agendada-dudas").textContent = Meet.plural(
+            cupo.dudas.length, "duda", "dudas"
+          );
+          renderIcons();
+        }
+
+        /* Los turnos se agrupan por día: una lista plana de 24 horarios no se
+           puede leer. Radios de verdad, para que el teclado los recorra con
+           flechas sin que haya que cablear nada. */
+        function pintarTurnos() {
+          const libres = ACADEMIA.turnosDisponibles(moduloId);
+          const cont = document.getElementById("turnos");
+
+          if (!libres.length) {
+            cont.innerHTML =
+              '<p class="alert alert-info text-sm"><span class="icon" data-icon="info"></span>' +
+              "Por ahora no hay turnos disponibles. Las dudas siguen en la cola y vas a poder " +
+              "agendar cuando se libere un turno.</p>";
+            const confirmar = document.getElementById("confirmar");
+            confirmar.disabled = true;
+            confirmar.setAttribute("aria-describedby", "turnos-vacio");
+            cont.insertAdjacentHTML(
+              "beforeend",
+              '<span class="sr-only" id="turnos-vacio">No hay turnos disponibles en la franja de atención.</span>'
+            );
+            return;
+          }
+
+          const porDia = {};
+          libres.forEach(function (t) {
+            const dia = t.inicioISO.slice(0, 10);
+            (porDia[dia] = porDia[dia] || []).push(t);
+          });
+
+          cont.innerHTML = Object.keys(porDia)
+            .sort()
+            .map(function (dia) {
+              const turnos = porDia[dia];
+              return (
+                '<fieldset class="flex flex-col gap-2">' +
+                '<legend class="text-sm font-bold">' + ACADEMIA.diaLargo(turnos[0].inicioISO) + "</legend>" +
+                '<div class="flex flex-wrap gap-2">' +
+                turnos
+                  .map(function (t) {
+                    return (
+                      '<label class="choice w-auto">' +
+                      '<input type="radio" name="turno" value="' + t.inicioISO + '" />' +
+                      '<span class="choice-text">' + ACADEMIA.horaDe(t.inicioISO) +
+                      ' <span class="meta">ART</span></span>' +
+                      "</label>"
+                    );
+                  })
+                  .join("") +
+                "</div>" +
+                "</fieldset>"
+              );
+            })
+            .join("");
+        }
+
+        /* Precargados quienes dejaron dudas; el coordinador puede sumarse si no
+           está. A quien dejó una duda no se lo puede destildar: la reunión es
+           por su duda. */
+        function pintarAsistentes(cupo) {
+          const conDuda = [];
+          cupo.dudas.forEach(function (d) {
+            if (conDuda.indexOf(d.empleadoId) === -1) conDuda.push(d.empleadoId);
+          });
+          const yo = ACADEMIA.persona.empleadoId;
+
+          const filas = conDuda.map(function (id) {
+            const fila = ACADEMIA.empleados.find(function (e) { return e.id === id; });
+            return (
+              '<label class="choice">' +
+              '<input type="checkbox" checked disabled />' +
+              '<span class="choice-text">' + Meet.esc(fila ? fila.nombre : "Alguien del equipo") +
+              (id === yo ? " (vos)" : "") +
+              ' <span class="meta">dejó una duda</span></span>' +
+              "</label>"
+            );
+          });
+
+          if (conDuda.indexOf(yo) === -1) {
+            filas.push(
+              '<label class="choice">' +
+              '<input type="checkbox" name="asistente" value="' + yo + '" checked />' +
+              '<span class="choice-text">' + Meet.esc(ACADEMIA.usuario.nombre) +
+              ' (vos) <span class="meta">coordinás la Meet</span></span>' +
+              "</label>"
+            );
+          }
+
+          document.getElementById("asistentes").innerHTML = filas.join("");
+        }
+
+        function pintar() {
+          const cupo = ACADEMIA.cupoMeet(moduloId);
+          if (cupo.estado === "agendado") return pintarAgendada(cupo);
+          secAgendada.hidden = true;
+          secAgendar.hidden = false;
+          pintarCola(cupo);
+          pintarTurnos();
+          pintarAsistentes(cupo);
+          renderIcons();
+        }
+
+        pintar();
+
+        /* -- Confirmar ----------------------------------------------------- */
+        const form = document.getElementById("form-agendar");
+        const confirmar = document.getElementById("confirmar");
+        const errorTurno = document.getElementById("turno-error");
+        const errorGeneral = document.getElementById("agendar-error");
+
+        form.addEventListener("change", function () {
+          errorTurno.hidden = true;
+        });
+
+        form.addEventListener("submit", function (evento) {
+          evento.preventDefault();
+          errorGeneral.hidden = true;
+
+          const elegido = form.querySelector('input[name="turno"]:checked');
+          if (!elegido) {
+            errorTurno.hidden = false;
+            const primero = form.querySelector('input[name="turno"]');
+            if (primero) primero.focus();
+            return;
+          }
+
+          UI.loading(confirmar, true);
           window.setTimeout(function () {
-            UI.loading(enviar, false);
-            mostrarConfirmacion(true);
+            UI.loading(confirmar, false);
+            if (!ACADEMIA.agendarMeet(moduloId, elegido.value)) {
+              errorGeneral.hidden = false;
+              return;
+            }
+            pintar();
+            const titulo = document.getElementById("agendada-titulo");
+            titulo.setAttribute("tabindex", "-1");
+            titulo.focus();
           }, 700);
         });
 
-        /* Enlace directo a la confirmación, para poder revisarla sin enviar. */
-        if (UI.param("state") === "sent") mostrarConfirmacion(false);
+        /* -- Cancelar ------------------------------------------------------ */
+        document.getElementById("mc-cancelar").addEventListener("click", function () {
+          UI.closeModal();
+          if (!ACADEMIA.cancelarMeet(moduloId)) return;
+          pintar();
+          const h1 = document.querySelector("#agendar h1");
+          h1.setAttribute("tabindex", "-1");
+          h1.focus();
+        });
+
+        renderIcons();
       })();
     </script>
   </body>

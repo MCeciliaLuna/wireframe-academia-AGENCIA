@@ -328,12 +328,20 @@ window.UI = (function () {
                        acá no sirve: no hay nada que la usuaria pueda hacer sola,
                        así que la salida es el canal de soporte.
 
-     Devuelve true si bloqueó, para que el controlador de la página corte. */
-  function bloquearModulo(modulo) {
+     Devuelve true si bloqueó, para que el controlador de la página corte.
+
+     `ignorarSecuencia` es la única excepción del producto, y la usa solo
+     `meet.html`: el coordinador agenda la Meet del equipo por su ROL, no por su
+     avance, así que tiene que poder entrar a un módulo que él todavía no
+     desbloqueó — las dudas de la cola son de gente que sí lo aprobó. El plan
+     de la agencia sigue mandando: un módulo fuera del plan no tiene cola
+     posible, porque nadie de esa agencia puede aprobarlo. */
+  function bloquearModulo(modulo, opciones) {
     const A = window.ACADEMIA;
     if (!A || !modulo) return false;
     const motivo = A.motivoBloqueo(modulo.id);
     if (!motivo) return false;
+    if (motivo === "secuencia" && opciones && opciones.ignorarSecuencia) return false;
 
     /* Los rótulos del chrome que nombran el módulo se completan igual: la
        guarda corta el controlador de la página antes de que los hidrate, y un

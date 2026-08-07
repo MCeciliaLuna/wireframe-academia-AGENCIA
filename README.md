@@ -78,7 +78,7 @@ un parámetro en la URL, igual que pasaría en el producto real.
 | 06 | Evaluación — en curso | `evaluacion.html?m=20&phase=quiz` |
 | 07 | Resultado aprobado | `evaluacion.html?m=20&phase=result&score=9` |
 | 08 | Resultado desaprobado | `evaluacion.html?m=20&phase=result&score=6` |
-| 09 | Solicitud de Meet | `meet.html?m=0` · confirmación: `&state=sent` |
+| 09 | Coordinar Meet (cola + turnos) | `meet.html?u=martin&m=10` · agendada: `?u=martin&m=20` |
 | 10 | Mi progreso y certificación | `certificaciones.html` |
 | 10b | Certificación — recorrido completo | `certificaciones.html?state=complete` |
 | 11 | Mi agencia | `agencia.html` · ranking: `?ver=ranking` |
@@ -87,13 +87,13 @@ un parámetro en la URL, igual que pasaría en el producto real.
 | 12c | Error de carga del video | `video.html?state=error` |
 | 12d | Carga — skeleton del listado | `modulos.html?state=loading` |
 | 13 | Menú de avatar abierto | `modulos.html?menu=open` |
-| 14 | Variante «Meet ya solicitada» | `modulo.html?m=10` |
+| 14 | Bloque de Meet — los 10 estados | `modulo.html?u=lucia&m=10` · el resto, en `design-system.html` |
 | 15 | Confirmación con preguntas sin responder | `evaluacion.html?m=20&phase=quiz&confirm=1` |
 | 16 | Sesión expirada (takeover) | cualquier página con `?state=expired` |
 | 17 | Guarda — bloqueado por secuencia | `modulo.html?m=50` · igual en `video` / `evaluacion` / `meet` |
 | 18 | Guarda — fuera del plan de la agencia | `modulo.html?m=90` · igual en las otras tres |
-| 19 | Meet todavía no habilitada | `meet.html?m=20` |
-| 20 | Meet de un módulo fuera de plan | `meet.html?m=90` |
+| 19 | Guarda — no sos el coordinador | `meet.html?u=lucia&m=10` |
+| 20 | Meet de un módulo fuera de plan | `meet.html?u=martin&m=90` |
 | 21 | Video con plan propio dentro del módulo | `modulo.html?m=80` (requiere haber avanzado) |
 
 `?m=` es el número del módulo en el mapa (`0`, `10`, `20` … `95`), **no** su posición en el recorrido.
@@ -108,7 +108,7 @@ sin volver a pasarla. La tabla completa, con los enlaces, está en `design-syste
 | `?u=` | Persona | Agencia · plan | Cómo llega |
 |---|---|---|---|
 | `lucia` *(default)* | Lucía Fernández | Viajes del Sur · Professional | Academia en curso: 2 de 9 aprobados y el tercero empezado |
-| `martin` | Martín Ruiz | Viajes del Sur · Professional | Recorrido terminado: 9 de 9, certificado emitido, las 9 Meets pedidas |
+| `martin` | Martín Ruiz | Viajes del Sur · Professional | Recorrido terminado: 9 de 9, certificado emitido, y coordina las Meets del equipo |
 | `nicolas` | Nicolás Vera | Viajes del Sur · Professional | Nunca entró: 0 de 9, solo el primer módulo abierto, sin puesto en el ranking |
 | `sofia` | Sofía Bianchi | Andes Receptivo · **Business** | Recorrido de 11: Contable y Receptivo entran, y el dashboard de KPIs se habilita |
 
@@ -123,8 +123,12 @@ URL, que entonces entra limpio con esa persona.
 
 Login → listado → módulo 03 (Entidades) → un video (dale play y cruzá el 80 %: el check del sidebar
 se actualiza solo) → evaluación → respondé → resultado → volver al listado (el módulo 04 ya está
-disponible) → certificaciones → mi agencia. En un módulo ya aprobado, el botón de Meet lleva a la
-solicitud y al volver la card dice «Meet solicitada el DD/MM».
+disponible) → certificaciones → mi agencia. En un módulo ya aprobado, el bloque de Meet al pie
+muestra la cola de dudas del equipo y deja dejar la tuya.
+
+Y el recorrido que muestra de qué se trata el modelo: dejá una duda como Lucía (`?u=lucia`), entrá
+como Martín (`?u=martin`) y vas a verla con su autor y poder agendar la Meet del equipo; entrá como
+Sofía (`?u=sofia`) y no está, porque es de otra agencia.
 
 ---
 
@@ -172,7 +176,7 @@ Donde la guía manda, se siguió al pie de la letra. Donde marca un hueco o una 
 | 7 | **Escala tipográfica** | Fluida con `clamp()` entre 375 y 1440 px, en el tramo bajo: H1 40→48. La escala del sitio comercial (H1 de 72) es de landing y en una app desborda. |
 | 8 | **Pesos** | Solo 400 y 700. `font-medium` y `font-semibold` se borraron del theme: no compilan, así que no pueden colarse. |
 | 9 | **Nombres de color** | Por rol (`primary`, `accent`, `indigo`, `success`…), nunca `color-2-normal`. |
-| 10 | **Modal** | Uno solo para todo el producto, con foco atrapado, `Esc` y confirmación in-place en la solicitud de Meet. |
+| 10 | **Modal** | Uno solo para todo el producto, con foco atrapado y `Esc`: el de dejar una duda y el de confirmar una cancelación usan el mismo. |
 | 11 | **Breakpoints** | Tres y cerrados: base, `md` 768, `lg` 1024. Los demás se borraron del theme. |
 | 12 | **`prefers-reduced-motion`** | Parte del sistema, no un agregado: anula `transform` y el shimmer, y baja las duraciones a 1 ms. |
 
@@ -207,7 +211,9 @@ Las dos están aplicadas de punta a punta, no solo escondiendo links:
   es texto plano y el motivo al lado, fuera del orden de tabulación.
 - Escribir `modulo.html?m=90` a mano tampoco entra: las **cuatro** pantallas que dan acceso a un
   módulo —`modulo.html`, `video.html`, `evaluacion.html` y `meet.html`— tienen la guarda.
-- `meet.html` suma una precondición propia: la Meet existe solo para un módulo **aprobado**.
+- `meet.html` es la excepción, a propósito: el coordinador agenda la Meet del equipo por su rol, así
+  que ahí el **plan** bloquea pero la **secuencia** no. Sofía puede agendar `BAK-M40` sin haberlo
+  aprobado, y sigue sin poder abrir su contenido.
 - **Aprobar desbloquea de verdad.** Las aprobaciones se guardan en `localStorage` —con una clave por
   persona, así que aprobar como una no le ensucia el avance a otra—, y si aprobás `BAK-M20`,
   `BAK-M30` queda disponible en todas las pantallas. **`?reset=1` en cualquier página** vuelve al
@@ -273,8 +279,10 @@ Lo que quedó **cerrado por decisión** y por eso no está construido: el estado
   cards fuera de plan no tienen ordinal, las tres secciones que rompen el orden de ID lo muestran, el
   video con plan propio se lista sin link, y aprobar el último módulo del recorrido cierra el
   certificado sin ofrecer `BAK-M90`.
-- Las cuatro guardas de módulo cortan con el aviso correcto según el motivo (secuencia o plan), y
-  `meet.html` además exige módulo aprobado.
+- Las guardas de módulo cortan con el aviso correcto según el motivo (secuencia o plan), y
+  `meet.html` suma las suyas: solo el coordinador, y solo con cola abierta.
+- **Los diez estados del bloque de Meet**, cada uno con su URL en `design-system.html`, y la cola
+  compartida entre las personas de una misma agencia y aislada de la otra.
 - Todas las bases de cálculo son los módulos del recorrido, coincidentes entre el listado, el
   certificado y la vista de agencia: 9 con Professional, 11 con Business.
 - **Las cuatro personas de prueba**, cada una recorrida entera: Lucía en 2 de 9, Martín en 9 de 9 con

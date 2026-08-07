@@ -93,7 +93,7 @@ con query params. Esto replica cómo se comportarían en el producto real.
 | `?phase=` | `quiz`, `result` (+ `&score=N`) | Fase del quiz en `evaluacion.html` |
 | `?confirm=1` | — | Abre el modal de preguntas sin responder |
 | `?menu=open` | — | Abre el menú de avatar |
-| `?meet=solicitada` | — | Variante «Meet ya solicitada» |
+| `?meet=` | `sin-lugares`, `abierto`, `agendado`, `consumido` | Fuerza el estado del cupo de Meet en `modulo.html`, para inspección |
 | `?ver=` | `ranking` | Vista de ranking del equipo en `agencia.html` |
 | `?m=` | `0`, `10`, `20` … `95` | Módulo. Es el número del mapa, **no** la posición en el recorrido |
 | `?v=` | `BAK-M20.030` | Video, por ID permanente. Alcanza solo: el módulo se deduce del video |
@@ -115,14 +115,15 @@ No hay módulos ES (romperían `file://`). Cada archivo expone un global vía II
 
 | Archivo | Global | Rol |
 |---|---|---|
-| `mock-data.js` | `ACADEMIA` | Datos + derivados (`recorrido()`, `posicion(id)`, `estadoEfectivo(id)`, `secciones(id)`, `banco(id)`) y la persona activa (`persona`, `agencia`, `claveStorage()`) |
+| `mock-data.js` | `ACADEMIA` | Datos + derivados (`recorrido()`, `posicion(id)`, `estadoEfectivo(id)`, `secciones(id)`, `banco(id)`, `cupoMeet(id)`) y la persona activa (`persona`, `agencia`, `claveStorage()`, `claveAgencia()`) |
 | `icons.js` | `ICONS`, `renderIcons()` | Mapa de paths SVG + hidratación |
 | `ui.js` | `UI` | `param()`, `moduloDeLaUrl()`, `showModal()`, `avisoPantalla()`, `bloquearModulo()`, `sessionExpired()` |
+| `meet.js` | `Meet` | Bloque de estado, cola y formulario de duda. Solo pinta: las reglas están en `mock-data.js` |
 | `quiz.js` | `Quiz` | Máquina de estados de la evaluación (solo lógica, sin DOM) |
 | `player.js` | `Player` | Reproductor simulado con umbral del 80 % |
 
-**Orden obligatorio:** `mock-data.js` → `icons.js` → `ui.js` → (`quiz.js` / `player.js`) → script
-inline de la página. El script inline de cada página es su controlador.
+**Orden obligatorio:** `mock-data.js` → `icons.js` → `ui.js` → (`quiz.js` / `player.js` / `meet.js`) →
+script inline de la página. El script inline de cada página es su controlador.
 
 ### Hidratación por `data-*`
 
@@ -150,8 +151,8 @@ No las cambies sin que venga del alcance funcional. Vienen del wireframe y del M
   `localStorage`, clave `academia:intento:<moduloId>`).
 - En el repaso de un intento desaprobado **nunca se muestra cuál era la respuesta correcta**, solo se
   marca la elegida. Sin lenguaje punitivo.
-- **Una sola Meet por módulo aprobado**, estado permanente: una vez pedida, el CTA se reemplaza por
-  texto plano (no es botón, no recibe foco, no está en el orden de tabulación).
+- **Una sola Meet por módulo POR AGENCIA**, con cola de dudas compartida y un coordinador que
+  agenda. Es la regla que más cambió y tiene su propia sección más abajo.
 - Un **único certificado final**, sin parciales.
 - El `sub-tema` de cada pregunta es **el nombre de una sección de su módulo**. Las dos taxonomías
   están alineadas a propósito: es lo que después permite garantizar cobertura por sección en el
@@ -195,8 +196,19 @@ const m = UI.moduloDeLaUrl();
 if (UI.bloquearModulo(m)) return;
 ```
 
-Si agregás una pantalla que dé acceso a un módulo, va a necesitar la misma guarda. `meet.html` suma
-una precondición propia: la Meet existe solo para un módulo **aprobado**.
+Si agregás una pantalla que dé acceso a un módulo, va a necesitar la misma guarda.
+
+**`meet.html` es la única excepción, y es deliberada.** El coordinador agenda la Meet del equipo por
+su ROL, no por su avance: las dudas de la cola son de gente que sí aprobó el módulo. Si le exigiéramos
+su propio avance, una cola podría quedar sin nadie que la atienda. Así que ahí la guarda corre con
+`{ ignorarSecuencia: ACADEMIA.esCoordinador() }`: **el plan sigue bloqueando** —un módulo fuera del
+plan de la agencia no puede tener cola, porque nadie de esa agencia puede aprobarlo— pero la
+secuencia no. Sofía coordina Andes Receptivo, aprobó hasta `BAK-M20` y tiene que poder agendar
+`BAK-M40`, donde dejaron dudas Ramiro y Julieta.
+
+De ahí se sigue algo que es fácil pasar por alto: **el coordinador necesita un punto de entrada que
+no sea el detalle del módulo**, porque `modulo.html?m=40` sí lo bloquea. Ese punto de entrada es el
+bloque «Meets del equipo» de `agencia.html`.
 
 ### Plan a nivel video
 
@@ -208,6 +220,59 @@ Está anotado como decisión a confirmar en la tabla de `design-system.html`.
 Para contar, usá siempre `videosAplicables(id)` / `vistosDelModulo(id)` / `progresoModulo(id)`, no
 `videosDelModulo(id)` (que devuelve todos, incluido el que el plan no habilita).
 
+### La Meet de soporte: una por módulo, por AGENCIA
+
+Es lo que más se aparta del wireframe original, y el motivo es de negocio: con una Meet por módulo
+**por usuario**, la carga de Soporte escala con el plantel de cada agencia —algo que SIGMMA no
+controla—. Con los dos planteles del prototipo, el techo pasa de **109 Meets** a **20**. Por eso el
+cupo es de la agencia, y por eso este es el único estado del prototipo que **no** cuelga de la
+persona.
+
+Las reglas viven enteras en `mock-data.js` y ninguna pantalla las reimplementa:
+
+| Función | Para qué |
+|---|---|
+| `ACADEMIA.esCoordinador()` | ¿La persona activa coordina su agencia? Deriva de `agencia.coordinadorId` |
+| `ACADEMIA.coordinador()` | La fila del plantel de quien agenda, para poder nombrarlo |
+| `ACADEMIA.cupoMeet(id)` | `{ estado, dudas[], mias[], meet }` de **la agencia activa** |
+| `ACADEMIA.puedeDejarDuda(id)` | Aprobado con ≥8/10 **y** cupo no consumido |
+| `ACADEMIA.puedeAgendar(id)` | Coordinador **+** plan **+** cupo abierto. **No** mira la secuencia |
+| `ACADEMIA.turnosDisponibles(id)` | Turnos libres de la franja. `[]` = franja agotada |
+| `ACADEMIA.colasAbiertas()` | Módulos con cola esperando turno. Alimenta `agencia.html` |
+| `ACADEMIA.registrarDuda / retirarDuda / agendarMeet / cancelarMeet` | Mutaciones, todas persistentes |
+| `ACADEMIA.horaART(iso)` | `"14/08/2026 15:00 (ART)"`. Todo horario en pantalla pasa por acá |
+
+**El estado del cupo no se guarda: se deriva.** Un `estado` almacenado se desincroniza en cuanto
+alguien retira una duda. Sin dudas → `sin-lugares`; con dudas y sin turno → `abierto`; turno a futuro
+→ `agendado`; turno ya pasado → `consumido`. **No hay `vencido`: la cola no caduca.** Por eso la
+matriz de estados tiene **10** filas y no las 11 de `flujo-meet.md`.
+
+`meet.js` pinta esos estados y no decide ninguno. La numeración de las filas está en su comentario de
+cabecera y en la tabla de URLs de `design-system.html`, enlazadas una a una.
+
+**El storage es por agencia, no por persona.** `claveAgencia("meet")` → `academia:meet:<agenciaId>`.
+Es la excepción a `claveStorage()`, y es justamente lo que hace demostrable el modelo:
+
+```
+?u=lucia   → dejar una duda en BAK-M10
+?u=martin  → la ve, con autor, y puede agendar
+?u=nicolas → ve que hay 3 dudas, NO el texto de las ajenas
+?u=sofia   → no ve nada: es de la otra agencia
+```
+
+**Los coordinadores son Martín (Viajes del Sur) y Sofía (Andes Receptivo).** No es arbitrario: las 9
+Meets que el seed de Martín tenía como suyas se reinterpretan sin inventar nada como las Meets de la
+agencia que él coordinó; y Sofía coordina un módulo que **no aprobó** (`BAK-M40`, con dudas de Ramiro
+y Julieta, que van más adelante que ella), que es la única forma de demostrar que el coordinador
+agenda por su rol. Lucía, la persona por defecto, queda del lado no coordinador, que es el caso
+mayoritario.
+
+**Visibilidad:** el coordinador ve todas las dudas con autor; el resto ve la cantidad del equipo y el
+texto solo de las propias. Está marcado como decisión a confirmar (`M-2`).
+
+El texto de las dudas lo escribe la usuaria, así que **se escapa** (`Meet.esc`). Es el único
+contenido del prototipo que no viene del mock.
+
 ### Las cuatro personas de prueba
 
 El avance de una sola usuaria no puede mostrar a la vez el recorrido en curso, el terminado y el que
@@ -218,9 +283,9 @@ la persona activa, que se aplica encima al arrancar.
 | `?u=` | Persona | Agencia · plan | Cómo llega |
 |---|---|---|---|
 | `lucia` *(default)* | Lucía Fernández | Viajes del Sur · Professional | `BAK-M00` y `BAK-M10` aprobados, `BAK-M20` en curso (2 de 6 vistos), `BAK-M30`–`BAK-M80` bloqueados por secuencia, `BAK-M90`/`BAK-M95` con candado de plan |
-| `martin` | Martín Ruiz | Viajes del Sur · Professional | Los 9 aprobados, los 45 videos aplicables vistos, las 9 Meets pedidas, certificado emitido. `moduloActual()` devuelve `null` |
+| `martin` | Martín Ruiz | Viajes del Sur · Professional | Los 9 aprobados, los 45 videos aplicables vistos, certificado emitido y **coordina las Meets** de su agencia. `moduloActual()` devuelve `null` |
 | `nicolas` | Nicolás Vera | Viajes del Sur · Professional | Nada: solo `BAK-M00` abierto, sin puesto en el ranking, y su fila del plantel en «Sin actividad» |
-| `sofia` | Sofía Bianchi | Andes Receptivo · **Business** | Recorrido de **11**: `BAK-M90` y `BAK-M95` entran con ordinales 10 y 11, y `BAK-M80.030` deja de tener candado |
+| `sofia` | Sofía Bianchi | Andes Receptivo · **Business** | Recorrido de **11**: `BAK-M90` y `BAK-M95` entran con ordinales 10 y 11, y `BAK-M80.030` deja de tener candado. **Coordina las Meets** de su agencia, incluido `BAK-M40`, que ella no aprobó |
 
 Son las mismas personas del plantel de su agencia (`empleadoId`): entrar como alguien mueve el flag
 `esVos` a su fila. Las filas de las cuatro se derivan de su seed, no se cargan a mano — si no, con
@@ -241,6 +306,9 @@ arrancar. Consecuencias al trabajar acá:
 - **Toda clave cuelga de la persona** y la compone `ACADEMIA.claveStorage(sufijo)`:
   `academia:aprobados:<clave>`, `academia:intento:<moduloId>:<clave>`. Aprobar como una no le puede
   ensuciar el avance a otra. No compongas la clave a mano.
+- **Con una excepción: la Meet.** La cola de dudas es del equipo, así que cuelga de la AGENCIA con
+  `ACADEMIA.claveAgencia("meet")` → `academia:meet:<agenciaId>`. Es a propósito: si se aislara por
+  persona, el modelo entero dejaría de poder demostrarse.
 - La persona activa vive en `academia:persona`, y se resuelve **antes que nada** en el IIFE: del
   plan de su agencia sale el recorrido.
 - **`?reset=1` en cualquier página** borra el avance de las cuatro y vuelve a Lucía. `?u=` se lee
@@ -250,7 +318,8 @@ arrancar. Consecuencias al trabajar acá:
   `pintarResultado()`): los deep links `?phase=result` son para mirar la pantalla y no ensucian el
   estado.
 - Los videos vistos **no** persisten entre páginas: al volver, cuenta el avance del seed. Está
-  anotado como límite del prototipo en la tabla de decisiones abiertas.
+  anotado como límite del prototipo en la tabla de decisiones abiertas. Las dudas y las Meets **sí**
+  persisten, porque sin eso la cola compartida no se puede mostrar.
 
 ### Progreso: por usuario, agregado por agencia (Opción C)
 
@@ -365,24 +434,53 @@ global.window={location:{search:"?u="+u},localStorage:{
 require("./assets/js/mock-data.js"); const A=window.ACADEMIA;
 const vistos=A.modulos.reduce((a,m)=>a+A.vistosDelModulo(m.id),0);
 console.log(u.padEnd(8),"|",A.usuario.perfil.padEnd(12),"| aprob "+A.aprobados()+"/"+A.total(),
- "| vistos "+vistos, "| meets "+A.modulos.filter(m=>m.meetSolicitada).length,
+ "| vistos "+vistos, "| coord "+(A.esCoordinador()?"SÍ":"no"),
  "| actual "+(A.moduloActual()?A.moduloActual().codigo:"null"),
  "| ords ["+A.recorrido().map(m=>A.posicion(m.id)).join(",")+"]");' $u; done
 ```
 
-Tiene que dar: `lucia` 2/9 y 12 vistos · `martin` 9/9, 45 vistos, 9 meets y `moduloActual()` en
-`null` · `nicolas` 0/9 y 0 vistos · `sofia` 3/11 con ordinales de 1 a 11.
+Tiene que dar: `lucia` 2/9 y 12 vistos, no coordina · `martin` 9/9, 45 vistos, **coordina**, y
+`moduloActual()` en `null` · `nicolas` 0/9 y 0 vistos · `sofia` 3/11, **coordina**, con ordinales de
+1 a 11.
 
 Y el aislamiento, que es lo que se rompe fácil: aprobar como una persona, cambiar de `?u=` y ver que
 la otra no se movió; `?u=nicolas&reset=1` entra limpio **como Nicolás**; `?u=` inválido cae en Lucía.
+
+### El aislamiento de la cola de Meet
+
+Es lo contrario del anterior y por eso hay que probarlo aparte: acá el estado **sí** tiene que
+cruzarse entre personas de la misma agencia, y **no** cruzarse entre agencias. Con un solo `store`
+compartido entre las cuatro "sesiones", como pasa en el navegador:
+
+```bash
+node -e '
+const store={};
+function entrar(u){
+  delete require.cache[require.resolve("./assets/js/mock-data.js")];
+  global.window={location:{search:"?u="+u},localStorage:{
+    getItem:k=>store[k]||null,setItem:(k,v)=>{store[k]=v},removeItem:k=>{delete store[k]}}};
+  require("./assets/js/mock-data.js"); return window.ACADEMIA;
+}
+entrar("lucia").registrarDuda(10,{texto:"Una duda de prueba"});
+["lucia","martin","nicolas","sofia"].forEach(u=>{ const A=entrar(u), c=A.cupoMeet(10);
+  console.log(u.padEnd(8), "cola", c.dudas.length,
+    "· textos visibles", c.dudas.filter(d=>A.esMia(d)||A.esCoordinador()).length); });'
+```
+
+Tiene que dar: `lucia` 3 con 2 textos · `martin` 3 con 3 (coordina) · `nicolas` 3 con 0 · `sofia`
+**0**, que es de la otra agencia. Y `?reset=1` tiene que borrar `academia:meet:<agenciaId>` — ojo
+que un `localStorage` falso con las claves fuera del objeto hace que `Object.keys()` del reset no vea
+nada y el reseteo parezca funcionar sin hacerlo.
 
 ### Recorrido en el navegador
 
 Con `google-chrome --headless=new --dump-dom` se puede verificar el DOM ya hidratado sin abrir nada a
 mano — así se validaron las guardas y los conteos de esta versión.
 
-Siempre arrancando con `?reset=1`. Lo mínimo: las **cuatro** guardas de módulo con sus dos motivos
-(`?m=50` secuencia, `?m=90` plan, en `modulo` / `video` / `evaluacion` / `meet`); que los ordinales del
+Siempre arrancando con `?reset=1`. Lo mínimo: las guardas de módulo con sus dos motivos (`?m=50`
+secuencia, `?m=90` plan) en `modulo` / `video` / `evaluacion`, y en `meet` **solo la de plan** si
+entrás como coordinador —`?u=sofia&m=40` tiene que ENTRAR a `meet.html` y seguir bloqueado en
+`modulo.html`—; que los ordinales del
 listado vayan de 1 a 9 **sin huecos** y las dos cards fuera de plan no tengan ordinal; que `?m=40`
 muestre la sección 3 con el video `050` antes del `040`; que `?m=80` liste el dashboard de KPIs sin
 link; y que aprobar `BAK-M80` cierre el recorrido **sin** ofrecer `BAK-M90`.
@@ -392,9 +490,26 @@ Con `?u=`: que `martin` tenga el certificado descargable (`btn-cta`) y vaya 1º 
 bloqueado por **secuencia** y no por plan; y que el plantel de la agencia dé los mismos números
 mirado desde cualquiera de las cuatro.
 
+Los **diez estados de la Meet** están enlazados uno por uno en la tabla de URLs de
+`design-system.html` (filas `14.1` a `14.10`); el bloque expone `data-meet-fila="N"`, así que se
+verifican sin leer el copy:
+
+```bash
+for q in "u=nicolas&m=0" "u=lucia&m=10&meet=sin-lugares" "u=lucia&m=10" \
+         "u=lucia&m=10&meet=agendado" "u=lucia&m=10&meet=consumido" \
+         "u=martin&m=70" "u=martin&m=10" "u=martin&m=20" "u=martin&m=30" "u=martin&m=80"; do
+  printf "%-34s " "$q"
+  google-chrome --headless=new --disable-gpu --dump-dom "file://$PWD/modulo.html?reset=1&$q" 2>/dev/null \
+    | grep -o 'data-meet-fila="[0-9]*"' | head -1
+done
+```
+
+Tiene que dar 1, 2, 3, 4, 5, 6, 7, 8, 9 y 10, en ese orden.
+
 Más: recorrer los deep links de `design-system.html` y compararlos contra el wireframe; revisar a
 375 / 768 / 1024 px sin scroll horizontal; y probar el recorrido de teclado (foco visible, `Esc` en
-modales y menú, foco que vuelve al disparador).
+modales y menú, foco que vuelve al disparador — al dejar o retirar una duda el bloque se repinta
+entero, así que el foco tiene que caer en el encabezado «Meet con Soporte» y no en el `body`).
 
 ## Git
 

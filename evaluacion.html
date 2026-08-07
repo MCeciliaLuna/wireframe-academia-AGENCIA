@@ -135,10 +135,16 @@
               </div>
               <div class="progress"><span id="r-progreso-barra" style="width: 0%"></span></div>
             </div>
+            <!-- Bloque secundario de duda. No compite con el desbloqueo, que es
+                 lo que la pantalla vino a comunicar: la duda es opcional y va
+                 abajo, separada por su propio borde. -->
+            <div id="r-duda" class="flex flex-col items-start gap-3 rounded-xl border border-line bg-surface p-5">
+              <p class="text-sm text-gray-700" id="r-duda-texto" data-meet-foco tabindex="-1"></p>
+              <div id="r-duda-accion"></div>
+            </div>
             <div class="flex flex-col gap-3 border-t border-line pt-5">
               <div class="flex flex-wrap gap-3">
                 <a class="btn btn-primary btn-lg" id="r-siguiente-modulo" href="modulos.html">Ir al siguiente módulo</a>
-                <a class="btn btn-bordered btn-lg" id="r-meet" href="meet.html"><span class="icon" data-icon="message"></span>Solicitar Meet con soporte</a>
               </div>
               <a class="link-quiet self-start" href="modulos.html">Volver al listado de módulos</a>
             </div>
@@ -189,10 +195,13 @@
       </div>
     </div>
 
+    <div id="modal-duda-host"></div>
+
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/icons.js"></script>
     <script src="assets/js/ui.js"></script>
     <script src="assets/js/quiz.js"></script>
+    <script src="assets/js/meet.js"></script>
     <script>
       (function () {
         "use strict";
@@ -378,6 +387,61 @@
           terminar();
         });
 
+        /* -- Meet: dejar una duda del módulo -------------------------------
+           El sub-tema de cada pregunta ES el título de una sección del módulo,
+           así que las secciones de las preguntas falladas son candidatos reales
+           para el campo Tema, no una sugerencia inventada. Con 10/10 no hay
+           ninguna y el campo queda libre. */
+        function subtemasFallados(r) {
+          const vistos = [];
+          r.erradas.forEach(function (e) {
+            const s = e.pregunta.subtema;
+            if (s && vistos.indexOf(s) === -1) vistos.push(s);
+          });
+          return vistos[0] || null;
+        }
+
+        /* El bloque refleja el estado en vez de reofrecer la acción si la duda
+           ya está en la cola: es la misma cola de la agencia que muestra
+           `modulo.html`, no un estado local de esta pantalla. */
+        function pintarDuda(sugerido) {
+          const cupo = ACADEMIA.cupoMeet(moduloId);
+          const texto = document.getElementById("r-duda-texto");
+          const accion = document.getElementById("r-duda-accion");
+          const mias = cupo.mias.length;
+
+          if (mias) {
+            texto.innerHTML =
+              "Ya dejaste " +
+              (mias === 1 ? "una duda" : mias + " dudas") +
+              " de este módulo en la cola de tu equipo. " +
+              (cupo.estado === "agendado"
+                ? "La Meet está agendada para el <strong>" + ACADEMIA.horaART(cupo.meet.inicioISO) + "</strong>."
+                : "El coordinador del equipo agenda la Meet con Soporte.");
+          } else {
+            texto.textContent =
+              cupo.dudas.length
+                ? "Hay " + Meet.plural(cupo.dudas.length, "duda", "dudas") +
+                  " de este módulo en la cola de tu equipo. Si te quedó algo, sumá la tuya."
+                : "Si te quedó una duda puntual de este módulo, dejala registrada. El coordinador del equipo agenda una Meet con Soporte cuando haya dudas.";
+          }
+
+          accion.innerHTML =
+            cupo.estado === "consumido"
+              ? '<a class="link-quiet text-sm" href="modulo.html?m=' + moduloId + '">Ver el estado de la Meet</a>'
+              : '<button class="btn btn-bordered" type="button" data-modal-open="modal-duda">' +
+                '<span class="icon" data-icon="message"></span>' +
+                (mias ? "Dejar otra duda" : "Me quedó una duda de este módulo") +
+                "</button>";
+
+          document.getElementById("modal-duda-host").innerHTML = Meet.markupModal(modulo);
+          Meet.cablear(modulo, function () {
+            pintarDuda(sugerido);
+          }, sugerido);
+          Meet.anunciar(document.getElementById("r-duda"));
+          renderIcons();
+        }
+
         /* -- 07 / 08 · Resultado ------------------------------------------- */
         function terminar() {
           Quiz.descartar(moduloId);
@@ -435,9 +499,11 @@
               aprobados + " de " + ACADEMIA.total() + " módulos · " + pct + " %";
             document.getElementById("r-progreso-barra").style.width = pct + "%";
 
-            /* Una sola Meet por módulo: si ya se pidió, el CTA no vuelve. */
-            if (modulo.meetSolicitada) document.getElementById("r-meet").hidden = true;
-            else document.getElementById("r-meet").href = "meet.html?m=" + modulo.id;
+            /* Dejar una duda, que es lo que abre la cola del módulo para toda
+               la agencia. El sub-tema de las preguntas falladas se sugiere como
+               tema: solo acá se puede, porque `Quiz.descartar()` ya borró el
+               intento del storage y `r.erradas` es lo último que queda de él. */
+            pintarDuda(subtemasFallados(r));
           } else {
             const faltan = ACADEMIA.quizConfig.umbral - r.correctas;
             cabecera.className =

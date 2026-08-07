@@ -147,6 +147,31 @@
           return videos + " videos · " + secciones + " secciones";
         }
 
+        /* Estado de la Meet del equipo para un módulo aprobado. En la primera
+           visita (`?state=empty`) no hay cola que mostrar: `m.sinMeet` lo apaga
+           sin que esta función tenga que saber de qué variante viene. */
+        function estadoMeet(m) {
+          if (m.sinMeet) return "";
+          const cupo = ACADEMIA.cupoMeet(m.id);
+          if (cupo.estado === "agendado")
+            return (
+              '<span class="flex items-center gap-1"><span class="icon icon-sm text-primary" data-icon="message"></span>' +
+              "Meet del equipo · " + ACADEMIA.fechaCorta(cupo.meet.inicioISO) + "</span>"
+            );
+          if (cupo.estado === "consumido")
+            return (
+              '<span class="flex items-center gap-1"><span class="icon icon-sm text-success" data-icon="check"></span>' +
+              "Meet del equipo hecha</span>"
+            );
+          if (cupo.estado === "abierto")
+            return (
+              '<span class="flex items-center gap-1"><span class="icon icon-sm text-ink-soft" data-icon="message"></span>' +
+              (cupo.dudas.length === 1 ? "1 duda" : cupo.dudas.length + " dudas") +
+              " en la cola del equipo</span>"
+            );
+          return "";
+        }
+
         function card(m) {
           const fueraDePlan = m.estado === "plan";
           const bloqueado = m.estado === "bloqueado";
@@ -170,17 +195,19 @@
               '<span class="tooltip" role="tooltip">Es parte del plan ' + ACADEMIA.planDe(m.id) +
               ". Si tu agencia lo necesita, escribinos.</span>";
           } else if (aprobado) {
-            /* Meet solicitada (pantalla 14a) va en la misma línea que la
-               métrica de videos, nunca debajo del botón: así el CTA siempre
-               cae al fondo de la card, sin importar qué avisos secundarios
-               tenga el módulo. No es botón: sin hover, sin foco, fuera del
-               orden de tabulación. */
+            /* El estado de la Meet va en la misma línea que la métrica de
+               videos, nunca debajo del botón: así el CTA siempre cae al fondo
+               de la card, sin importar qué avisos secundarios tenga el módulo.
+               No es botón: sin hover, sin foco, fuera del orden de tabulación.
+
+               Es el estado de la AGENCIA, no el de esta persona: la Meet del
+               módulo es una para todo el equipo. Por eso dice "del equipo" —
+               sin nombrarlo, "Meet agendada" se leería como algo que pidió
+               quien está mirando. */
             pie =
               '<div class="flex items-center justify-between gap-2 text-xs text-ink-soft">' +
               "<span>" + conteo(m) + "</span>" +
-              (m.meetSolicitada
-                ? '<span class="flex items-center gap-1"><span class="icon icon-sm text-success" data-icon="check"></span>Meet solicitada el ' + m.meetSolicitada + "</span>"
-                : "") +
+              estadoMeet(m) +
               "</div>" +
               '<a class="btn btn-bordered btn-sm btn-block" href="evaluacion.html?m=' + m.id + '">Rehacer evaluación</a>';
           } else if (activo) {
@@ -266,7 +293,7 @@
                   : "plan",
                 vistos: 0,
                 nota: null,
-                meetSolicitada: null,
+                sinMeet: true,
               });
             }
             return Object.assign({}, m, {

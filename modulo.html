@@ -56,18 +56,15 @@
       </nav>
 
       <!-- Barra de módulo aprobado (pantalla 14b). Solo aparece si el módulo ya
-           se aprobó. El CTA de Meet se reemplaza por texto plano una vez enviada
-           la solicitud: es un estado permanente, no un botón deshabilitado. -->
+           se aprobó. La Meet NO vive acá: es soporte opcional y no puede
+           competir con el resultado de la evaluación, así que va en su propio
+           bloque al pie. Además la cola de dudas no entra en una barra. -->
       <div id="barra-aprobado" class="flex flex-col gap-4 rounded-xl border border-success-line bg-success-bg p-5 md:flex-row md:items-center" hidden>
         <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-success-dark text-white"><span class="icon icon-lg" data-icon="check"></span></span>
         <p class="flex-1 text-sm text-success-dark">
           <strong class="text-base">Módulo aprobado</strong><br />
           Nota <span class="font-bold" data-nota></span>/10 · <span data-fecha-aprobacion></span>
         </p>
-        <p id="meet-hecha" class="flex items-center gap-2 text-sm text-success-dark" hidden>
-          <span class="icon icon-sm" data-icon="check"></span>Meet solicitada el <span data-meet-fecha></span>
-        </p>
-        <a id="meet-cta" class="btn btn-bordered btn-sm" href="meet.html"><span class="icon" data-icon="message"></span>Solicitar Meet con soporte</a>
         <a id="rehacer-cta" class="btn btn-primary btn-sm" href="evaluacion.html">Rehacer evaluación</a>
       </div>
 
@@ -111,11 +108,20 @@
           </div>
         </aside>
       </div>
+
+      <!-- Meet con Soporte. Al pie y con la jerarquía más baja de la pantalla:
+           es soporte opcional, no el objetivo del módulo. Lo pinta `meet.js`,
+           que tiene los diez estados de la matriz — el markup no puede estar
+           acá porque `evaluacion.html` y `agencia.html` usan las mismas piezas. -->
+      <div id="bloque-meet"></div>
     </main>
+
+    <div id="modal-duda-host"></div>
 
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/icons.js"></script>
     <script src="assets/js/ui.js"></script>
+    <script src="assets/js/meet.js"></script>
     <script>
       (function () {
         "use strict";
@@ -126,7 +132,6 @@
         if (UI.bloquearModulo(m)) return;
 
         const aprobado = m.estado === "aprobado";
-        const meetHecha = UI.param("meet") === "solicitada" || Boolean(m.meetSolicitada);
 
         document.title = m.titulo + " · Academia SIGMMA";
         document.querySelectorAll("[data-modulo-titulo]").forEach(function (el) {
@@ -143,16 +148,23 @@
           barra.querySelector("[data-nota]").textContent = m.nota;
           barra.querySelector("[data-fecha-aprobacion]").textContent = m.fechaAprobacion;
           document.getElementById("rehacer-cta").href = "evaluacion.html?m=" + m.id;
-          if (meetHecha) {
-            document.getElementById("meet-cta").hidden = true;
-            const hecha = document.getElementById("meet-hecha");
-            hecha.hidden = false;
-            hecha.querySelector("[data-meet-fecha]").textContent =
-              m.meetSolicitada || ACADEMIA.hoyCorto();
-          } else {
-            document.getElementById("meet-cta").href = "meet.html?m=" + m.id;
-          }
         }
+
+        /* Bloque de Meet con Soporte. Se repinta entero después de dejar o
+           retirar una duda: es más simple que parchear el estado a mano y no
+           puede quedar desincronizado del cupo. */
+        const host = document.getElementById("bloque-meet");
+        document.getElementById("modal-duda-host").innerHTML = Meet.markupModal(m);
+
+        function pintarMeet() {
+          host.innerHTML = Meet.bloque(m);
+          renderIcons();
+        }
+
+        pintarMeet();
+        Meet.anunciar(host);
+        Meet.cablear(m, pintarMeet);
+        Meet.cablearRetiro(host, pintarMeet);
 
         /* Syllabus del módulo: cada módulo tiene el suyo, con sus secciones en
            el orden del ABM. Los conteos se derivan de acá y no de un campo

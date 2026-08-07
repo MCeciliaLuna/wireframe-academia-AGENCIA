@@ -156,6 +156,18 @@
         </button>
       </div>
 
+      <!-- Meets del equipo. Es el punto de entrada del coordinador y solo lo ve
+           él: puede tener que agendar módulos que él todavía no desbloqueó, así
+           que no puede llegar por el detalle del módulo — ahí la guarda de
+           secuencia lo frena. Esta pantalla es la única que lo deja llegar. -->
+      <section id="meets-equipo" class="flex flex-col gap-3" hidden>
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h2 class="text-h5">Meets del equipo</h2>
+          <span class="meta">Coordinás las Meets con Soporte de <span data-user-agency></span></span>
+        </div>
+        <div id="meets-lista"></div>
+      </section>
+
       <!-- Vacío (12b): la agencia existe pero nadie arrancó todavía. -->
       <div id="vacio" class="placeholder-box" hidden>
         <span class="placeholder-icon"><span class="icon icon-lg" data-icon="users"></span></span>
@@ -218,6 +230,7 @@
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/icons.js"></script>
     <script src="assets/js/ui.js"></script>
+    <script src="assets/js/meet.js"></script>
     <script>
       (function () {
         "use strict";
@@ -339,6 +352,11 @@
               "<td>" +
               '<span class="font-bold">' + e.nombre + "</span>" +
               (e.esVos ? '<span class="meta"> (vos)</span>' : "") +
+              /* Quién coordina las Meets se muestra a todo el equipo: sin esto,
+                 «el coordinador agenda» no le dice a nadie a quién apurar. */
+              (e.id === ACADEMIA.agencia.coordinadorId
+                ? '<br /><span class="meta">Coordina las Meets con Soporte</span>'
+                : "") +
               "</td>" +
               '<td class="tabular-nums">' + e.aprobados + " de " + total +
               (e.certificado
@@ -355,6 +373,37 @@
             );
           })
           .join("");
+
+        /* Meets del equipo esperando turno. Solo para el coordinador, y solo si
+           hay alguna: un bloque vacío rotulado «Meets del equipo» se lee como
+           una función rota. `?state=empty` lo apaga junto con todo lo demás. */
+        const colas = vacio || !ACADEMIA.esCoordinador() ? [] : ACADEMIA.colasAbiertas();
+        if (colas.length) {
+          document.getElementById("meets-equipo").hidden = false;
+          document.getElementById("meets-lista").innerHTML =
+            '<ul class="overflow-hidden rounded-xl border border-line bg-white">' +
+            colas
+              .map(function (c) {
+                /* El coordinador puede tener módulos con cola que él todavía no
+                   desbloqueó: se nombran igual, con su ordinal del recorrido. */
+                const hayTurnos = ACADEMIA.turnosDisponibles(c.modulo.id).length > 0;
+                return (
+                  '<li class="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-4 py-3 last:border-b-0">' +
+                  '<span class="min-w-0 flex-1">' +
+                  '<span class="block text-sm font-bold">' + Meet.esc(c.modulo.titulo) + "</span>" +
+                  '<span class="meta">' + ACADEMIA.rotulo(c.modulo.id) + " · " +
+                  Meet.plural(c.dudas.length, "duda en cola", "dudas en cola") + "</span>" +
+                  "</span>" +
+                  (hayTurnos
+                    ? '<a class="btn btn-bordered btn-sm shrink-0" href="meet.html?m=' + c.modulo.id +
+                      '">Coordinar Meet</a>'
+                    : '<span class="badge badge-neutral shrink-0">Sin turnos por ahora</span>')
+                  + "</li>"
+                );
+              })
+              .join("") +
+            "</ul>";
+        }
 
         renderIcons();
 

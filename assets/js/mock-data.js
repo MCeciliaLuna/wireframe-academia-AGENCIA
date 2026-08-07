@@ -52,6 +52,64 @@ window.ACADEMIA = (function () {
     );
   }
 
+  /* ISO local a N días de hoy, a una hora dada. Los turnos de Meet no se pueden
+     sembrar con fechas fijas: un turno "agendado" cargado a mano se convierte
+     en pasado con el correr de las semanas y la demo se pinta sola como
+     consumida. Los turnos que YA pasaron sí van con fecha fija, porque pasados
+     se quedan. */
+  function enDias(dias, hora) {
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    return (
+      d.getFullYear() +
+      "-" +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(d.getDate()).padStart(2, "0") +
+      "T" +
+      hora +
+      ":00"
+    );
+  }
+
+  /* Ahora, en el mismo formato ISO local que el resto del prototipo. No usa
+     `toISOString()`, que devuelve UTC: con ART (UTC-3) adelantaría tres horas y
+     un turno de esta tarde se leería como pasado. */
+  function ahoraISO() {
+    const d = new Date();
+    const dosCifras = function (n) { return String(n).padStart(2, "0"); };
+    return (
+      d.getFullYear() +
+      "-" + dosCifras(d.getMonth() + 1) +
+      "-" + dosCifras(d.getDate()) +
+      "T" + dosCifras(d.getHours()) +
+      ":" + dosCifras(d.getMinutes()) +
+      ":" + dosCifras(d.getSeconds())
+    );
+  }
+
+  /* Zona horaria: el prototipo no convierte husos —corre en la hora local del
+     navegador— pero TODO horario que va a pantalla se rotula (ART), que es la
+     zona de atención de Soporte. Está anotado como límite conocido en la tabla
+     de decisiones abiertas del design system. */
+  const DIAS_SEMANA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+  function horaDe(iso) {
+    return iso ? iso.slice(11, 16) : null;
+  }
+
+  /* "jueves 14/08/2026" — encabezado del grupo de turnos de un día. */
+  function diaLargo(iso) {
+    if (!iso) return null;
+    return DIAS_SEMANA[new Date(iso).getDay()] + " " + fechaCorta(iso);
+  }
+
+  /* "14/08/2026 15:00 (ART)" — el formato único de todo turno en pantalla. */
+  function horaART(iso) {
+    if (!iso) return null;
+    return fechaCorta(iso) + " " + horaDe(iso) + " (ART)";
+  }
+
   /* "Hoy 10:12" si el acceso es del día, si no la fecha corta. `null` cuando la
      persona nunca entró: la vista decide cómo nombrar esa ausencia. */
   function etiquetaAcceso(iso) {
@@ -78,6 +136,13 @@ window.ACADEMIA = (function () {
      de capacitación, sin datos personales sensibles ni respuestas individuales
      de las evaluaciones.
 
+     `coordinadorId` es quien agenda las Meets del equipo, y cuelga de la
+     agencia por el mismo motivo que el plan: es una propiedad de la agencia,
+     no un atributo de la persona. Un solo dato, no un flag repetido en cada
+     fila del plantel — así no puede haber dos coordinadores por accidente. En
+     el producto real lo resuelve el backend y llega de solo lectura; acá se
+     carga a mano porque no hay backend. No hay ninguna UI para designarlo.
+
      `ultimaAprobacion` es el timestamp del módulo aprobado más reciente y es el
      desempate del ranking: entre dos personas con la misma cantidad de módulos,
      va primero la que llegó antes a ese número. En Viajes del Sur, Paula y
@@ -91,6 +156,7 @@ window.ACADEMIA = (function () {
       id: "viajes-del-sur",
       nombre: "Viajes del Sur",
       plan: PROF,
+      coordinadorId: 2, // Martín Ruiz
       plantel: [
         /* Lucía (1), Martín (2) y Nicolás (6) son personas de prueba: sus
            números salen de su seed y no se cargan acá. */
@@ -109,6 +175,7 @@ window.ACADEMIA = (function () {
       id: "andes-receptivo",
       nombre: "Andes Receptivo",
       plan: BUS,
+      coordinadorId: 101, // Sofía Bianchi
       plantel: [
         /* Sofía (101) es persona de prueba: sus números salen de su seed. */
         { id: 101, nombre: "Sofía Bianchi", ultimoAccesoISO: isoHoy() + "T09:40:00" },
@@ -133,10 +200,13 @@ window.ACADEMIA = (function () {
      Son las mismas personas del plantel de su agencia (`empleadoId`): entrar
      como alguien mueve el flag `esVos` a su fila y el ranking sigue cerrando.
 
-     · `aprobados`   — módulos con nota, fecha y, si pidió la Meet, su día.
+     · `aprobados`   — módulos con nota y fecha de aprobación.
      · `enProgreso`  — el módulo donde quedó, si hay alguno.
      · `videos`      — avance parcial. Los videos de un módulo aprobado se
-                       marcan vistos solos: no hace falta enumerarlos. */
+                       marcan vistos solos: no hace falta enumerarlos.
+
+     Las Meets NO están acá: son de la agencia, no de la persona. Viven en
+     `colasMeet`, más abajo. */
   const personas = [
     {
       clave: "lucia",
@@ -149,7 +219,7 @@ window.ACADEMIA = (function () {
       seed: {
         aprobados: [
           { id: 0, nota: 9, aprobadoEn: "2026-06-02T11:20:35" },
-          { id: 10, nota: 8, aprobadoEn: "2026-06-08T16:05:12", meetSolicitada: "09/06" },
+          { id: 10, nota: 8, aprobadoEn: "2026-06-08T16:05:12" },
         ],
         enProgreso: 20,
         videos: {
@@ -166,20 +236,20 @@ window.ACADEMIA = (function () {
       iniciales: "MR",
       agenciaId: "viajes-del-sur",
       empleadoId: 2,
-      resumen: "Recorrido terminado: los 9 módulos aprobados, certificado emitido y las 9 Meets pedidas.",
+      resumen: "Recorrido terminado, certificado emitido, y coordina las Meets de Viajes del Sur.",
       seed: {
         aprobados: [
-          { id: 0, nota: 9, aprobadoEn: "2026-06-01T09:12:40", meetSolicitada: "02/06" },
-          { id: 10, nota: 10, aprobadoEn: "2026-06-05T11:38:05", meetSolicitada: "06/06" },
-          { id: 20, nota: 8, aprobadoEn: "2026-06-11T15:22:18", meetSolicitada: "12/06" },
-          { id: 30, nota: 9, aprobadoEn: "2026-06-18T10:04:51", meetSolicitada: "19/06" },
-          { id: 40, nota: 8, aprobadoEn: "2026-06-25T16:47:09", meetSolicitada: "26/06" },
-          { id: 50, nota: 10, aprobadoEn: "2026-07-02T09:55:33", meetSolicitada: "03/07" },
-          { id: 60, nota: 9, aprobadoEn: "2026-07-09T14:19:26", meetSolicitada: "10/07" },
-          { id: 70, nota: 8, aprobadoEn: "2026-07-16T11:31:47", meetSolicitada: "17/07" },
+          { id: 0, nota: 9, aprobadoEn: "2026-06-01T09:12:40" },
+          { id: 10, nota: 10, aprobadoEn: "2026-06-05T11:38:05" },
+          { id: 20, nota: 8, aprobadoEn: "2026-06-11T15:22:18" },
+          { id: 30, nota: 9, aprobadoEn: "2026-06-18T10:04:51" },
+          { id: 40, nota: 8, aprobadoEn: "2026-06-25T16:47:09" },
+          { id: 50, nota: 10, aprobadoEn: "2026-07-02T09:55:33" },
+          { id: 60, nota: 9, aprobadoEn: "2026-07-09T14:19:26" },
+          { id: 70, nota: 8, aprobadoEn: "2026-07-16T11:31:47" },
           /* Coincide con su `ultimaAprobacion` en el plantel: es lo que lo pone
              primero en el ranking de la agencia. */
-          { id: 80, nota: 10, aprobadoEn: "2026-07-28T09:41:22", meetSolicitada: "29/07" },
+          { id: 80, nota: 10, aprobadoEn: "2026-07-28T09:41:22" },
         ],
         enProgreso: null,
         videos: {},
@@ -202,10 +272,10 @@ window.ACADEMIA = (function () {
       iniciales: "SB",
       agenciaId: "andes-receptivo",
       empleadoId: 101,
-      resumen: "Plan Business: recorrido de 11 módulos, con Contable y Receptivo incluidos.",
+      resumen: "Plan Business: recorrido de 11 módulos, y coordina las Meets de Andes Receptivo.",
       seed: {
         aprobados: [
-          { id: 0, nota: 8, aprobadoEn: "2026-07-06T10:15:22", meetSolicitada: "07/07" },
+          { id: 0, nota: 8, aprobadoEn: "2026-07-06T10:15:22" },
           { id: 10, nota: 9, aprobadoEn: "2026-07-14T12:40:11" },
           { id: 20, nota: 8, aprobadoEn: "2026-07-22T17:05:48" },
         ],
@@ -217,6 +287,82 @@ window.ACADEMIA = (function () {
       },
     },
   ];
+
+  /* -- Meet de soporte: cola de dudas y cupo por agencia ---------------------
+     El cupo es UNA Meet por módulo POR AGENCIA, no por usuario. Quien aprueba
+     un módulo y le queda una duda la deja registrada; las dudas se acumulan en
+     una cola por módulo dentro de la agencia; el coordinador agenda una única
+     Meet con Soporte, cuya agenda es esa cola.
+
+     Es la diferencia que hace que la Academia no vuelva a saturar soporte: con
+     una Meet por usuario, la carga escala con el plantel de cada agencia —algo
+     que SIGMMA no controla—. Por agencia, el techo es `agencias × módulos del
+     plan`, que sí es presupuestable.
+
+     Por eso esto es lo ÚNICO del prototipo que NO cuelga de la persona: cuelga
+     de la agencia (`claveAgencia`, no `claveStorage`). Dejar una duda como
+     Lucía y verla al entrar como Martín es la demostración del modelo; no
+     verla al entrar como Sofía, que es de la otra agencia, es la otra mitad.
+
+     `empleadoId` engancha con el plantel de la agencia: el autor de la duda es
+     una fila del plantel, no un string suelto. `subtema` es el título de una
+     SECCIÓN del módulo, igual que en los bancos de preguntas: las dos
+     taxonomías están alineadas a propósito. */
+  const colasMeet = {
+    "viajes-del-sur": {
+      dudas: [
+        /* M00 · consumido — la Meet ya se hizo */
+        { moduloId: 0, empleadoId: 1, videoId: "BAK-M00.040", subtema: "Moverse por SIGMMA", texto: "La rueda de progreso del file, ¿se puede configurar qué pasos cuenta o son fijos?", creadaEn: "2026-06-01T14:22:08" },
+        { moduloId: 0, empleadoId: 2, videoId: "BAK-M00.030", subtema: "La lógica del sistema", texto: "Los procesos atomizados, ¿aplican igual si la agencia trabaja solo con receptivo?", creadaEn: "2026-06-01T17:45:30" },
+        /* M10 · abierto — la cola que el coordinador todavía tiene que agendar */
+        { moduloId: 10, empleadoId: 1, videoId: "BAK-M10.030", subtema: "Configurar el file", texto: "Si el file se abrió en USD y el cliente paga en ARS, ¿la moneda de registro se puede cambiar después o hay que rehacer el file?", creadaEn: "2026-06-09T09:14:51" },
+        { moduloId: 10, empleadoId: 2, videoId: "BAK-M10.050", subtema: "Configurar el file", texto: "El cierre automático del file, ¿espera a que estén cobrados todos los vouchers o alcanza con que estén procesados?", creadaEn: "2026-06-10T11:38:02" },
+        /* M20 · agendado — turno tomado, a futuro */
+        { moduloId: 20, empleadoId: 3, videoId: "BAK-M20.030", subtema: "Cliente vs. pasajero", texto: "Cuando el que paga es una empresa y viajan tres empleados, ¿cargo la empresa como cliente y los tres como pax, o cada uno como cliente?", creadaEn: "2026-06-12T16:05:44" },
+        /* M30 a M60 · consumidos */
+        { moduloId: 30, empleadoId: 4, videoId: "BAK-M30.030", subtema: "Los números del voucher", texto: "Comisión y utilidad me dan distinto en el mismo voucher. ¿Cuál mira el informe de rentabilidad?", creadaEn: "2026-06-17T10:52:19" },
+        { moduloId: 40, empleadoId: 5, videoId: "BAK-M40.020", subtema: "Emitir el recibo", texto: "Un valor de tercero (TC3) que después rebota, ¿cómo se revierte sin anular el recibo entero?", creadaEn: "2026-06-24T15:31:07" },
+        { moduloId: 50, empleadoId: 3, videoId: "BAK-M50.060", subtema: "Ajustes y casos especiales", texto: "El tipo de cambio promedio ponderado, ¿se recalcula si después entra una cobranza más del mismo file?", creadaEn: "2026-07-01T12:18:55" },
+        { moduloId: 60, empleadoId: 2, videoId: "BAK-M60.030", subtema: "Ajustes y cuenta corriente", texto: "Un saldo a favor con un proveedor, ¿se puede aplicar a una orden de pago de otro file del mismo proveedor?", creadaEn: "2026-07-08T09:27:41" },
+        /* M70 · sin dudas, la cola nunca se abrió */
+        /* M80 · abierto pero sin turnos libres en la franja */
+        { moduloId: 80, empleadoId: 4, videoId: "BAK-M80.020", subtema: "Informes operativos", texto: "El informe de vencimientos, ¿se puede filtrar por vendedor además de por rango de fechas?", creadaEn: "2026-07-30T11:04:16" },
+        { moduloId: 80, empleadoId: 5, videoId: "BAK-M80.040", subtema: "Administración y KPIs", texto: "Ingresos y egresos del informe administrativo, ¿salen de lo facturado o de lo efectivamente cobrado?", creadaEn: "2026-08-03T16:49:23" },
+      ],
+      meets: [
+        { moduloId: 0, inicioISO: "2026-06-02T15:00:00", enlace: "https://meet.example/sgm-vds-m00" },
+        { moduloId: 20, inicioISO: enDias(6, "15:30"), enlace: "https://meet.example/sgm-vds-m20" },
+        { moduloId: 30, inicioISO: "2026-06-19T16:00:00", enlace: "https://meet.example/sgm-vds-m30" },
+        { moduloId: 40, inicioISO: "2026-06-26T15:00:00", enlace: "https://meet.example/sgm-vds-m40" },
+        { moduloId: 50, inicioISO: "2026-07-03T15:30:00", enlace: "https://meet.example/sgm-vds-m50" },
+        { moduloId: 60, inicioISO: "2026-07-10T16:00:00", enlace: "https://meet.example/sgm-vds-m60" },
+      ],
+    },
+    /* Sofía coordina, pero aprobó hasta BAK-M20. Las dudas de BAK-M40 son de
+       Ramiro y Julieta, que van más adelante que ella: es el caso que demuestra
+       que el coordinador agenda aunque él mismo no haya aprobado el módulo, y
+       el que obliga a que `meet.html` no aplique la guarda de secuencia. */
+    "andes-receptivo": {
+      dudas: [
+        { moduloId: 0, empleadoId: 101, videoId: "BAK-M00.020", subtema: "La lógica del sistema", texto: "El ciclo 360°, ¿cambia en algo cuando la agencia es receptiva y el prestador es propio?", creadaEn: "2026-07-06T15:12:33" },
+        { moduloId: 40, empleadoId: 102, videoId: "BAK-M40.030", subtema: "Moneda en la cobranza", texto: "Para un pax del exterior que paga en EUR contra un file en USD, ¿qué fuente de tipo de cambio toma el recibo?", creadaEn: "2026-07-27T10:41:19" },
+        { moduloId: 40, empleadoId: 103, videoId: "BAK-M40.050", subtema: "Cuenta corriente y devoluciones", texto: "La cuenta corriente por moneda, ¿se puede ver consolidada a moneda de reporte o siempre separada?", creadaEn: "2026-08-04T17:08:52" },
+      ],
+      meets: [{ moduloId: 0, inicioISO: "2026-07-08T15:00:00", enlace: "https://meet.example/sgm-and-m00" }],
+    },
+  };
+
+  /* Franja de atención de Soporte. En el producto real se configura aparte y
+     llega como dato; acá se genera para que los turnos nunca queden en el
+     pasado. `sinTurnosPara` simula la franja agotada para un módulo: es la
+     única forma de recorrer el estado "hay cola pero no hay turno libre". */
+  const franjaMeet = {
+    duracionMin: 30,
+    dias: [2, 4], // martes y jueves
+    horas: ["15:00", "15:30", "16:00", "16:30"],
+    semanas: 3,
+    sinTurnosPara: [80],
+  };
 
   /* -- Persona activa --------------------------------------------------------
      Se resuelve antes que nada porque de la persona sale el plan de su agencia,
@@ -284,6 +430,13 @@ window.ACADEMIA = (function () {
      mano. */
   function claveStorage(sufijo) {
     return "academia:" + sufijo + ":" + persona.clave;
+  }
+
+  /* Prefijo de storage por AGENCIA. Lo usa solo la Meet, y es la excepción
+     deliberada al aislamiento por persona: la cola de dudas es del equipo, así
+     que Lucía y Martín tienen que compartirla y Sofía no. */
+  function claveAgencia(sufijo) {
+    return "academia:" + sufijo + ":" + agencia.id;
   }
 
   /* Atajo de carga del syllabus: `v(id, titulo, "M:SS")` deriva los segundos de
@@ -1406,11 +1559,10 @@ window.ACADEMIA = (function () {
     return hallado;
   }
 
-  function aprobarEnMock(m, nota, aprobadoEn, meetSolicitada) {
+  function aprobarEnMock(m, nota, aprobadoEn) {
     m.estado = "aprobado";
     m.nota = nota;
     m.aprobadoEn = aprobadoEn;
-    if (meetSolicitada) m.meetSolicitada = meetSolicitada;
     /* Un módulo aprobado tiene sus videos vistos. Se marcan acá y no en cada
        vista porque `video.html` lee `visto` crudo: sin esto, un módulo aprobado
        mostraría "No visto" adentro y "6 de 6" afuera. Los videos que el plan de
@@ -1428,7 +1580,7 @@ window.ACADEMIA = (function () {
   function aplicarSeed(seed) {
     seed.aprobados.forEach(function (registro) {
       const m = modulos.find(function (x) { return x.id === Number(registro.id); });
-      if (m) aprobarEnMock(m, registro.nota, registro.aprobadoEn, registro.meetSolicitada);
+      if (m) aprobarEnMock(m, registro.nota, registro.aprobadoEn);
     });
     if (seed.enProgreso !== null) {
       const m = modulos.find(function (x) { return x.id === Number(seed.enProgreso); });
@@ -1467,6 +1619,43 @@ window.ACADEMIA = (function () {
     escribirStorage(CLAVE_APROBADOS, JSON.stringify(lista));
   }
 
+  /* La cola de la agencia activa. A diferencia de las aprobaciones, la clave
+     cuelga de la AGENCIA: dejar una duda como Lucía tiene que verse al entrar
+     como Martín. `cola` arranca en el seed y se pisa entero con lo guardado,
+     porque las dudas se retiran y las Meets se cancelan: un merge dejaría
+     resucitar lo borrado. */
+  const CLAVE_MEET = claveAgencia("meet");
+  const seedCola = colasMeet[agencia.id] || { dudas: [], meets: [] };
+
+  const cola = { dudas: [], meets: [] };
+
+  function idDuda(d) {
+    return "D-" + d.moduloId + "-" + d.empleadoId + "-" + d.creadaEn.replace(/\D/g, "");
+  }
+
+  function cargarCola() {
+    let guardada = null;
+    if (!reseteando) {
+      try {
+        const crudo = JSON.parse(leerStorage(CLAVE_MEET) || "null");
+        if (crudo && Array.isArray(crudo.dudas) && Array.isArray(crudo.meets)) guardada = crudo;
+      } catch (e) {
+        /* Storage corrupto: se cae al seed, que siempre es coherente. */
+      }
+    }
+    const base = guardada || seedCola;
+    cola.dudas = base.dudas.map(function (d) {
+      return Object.assign({}, d, { id: d.id || idDuda(d) });
+    });
+    cola.meets = base.meets.map(function (m) {
+      return Object.assign({ duracionMin: franjaMeet.duracionMin, enlace: null }, m);
+    });
+  }
+
+  function guardarCola() {
+    escribirStorage(CLAVE_MEET, JSON.stringify({ dudas: cola.dudas, meets: cola.meets }));
+  }
+
   if (reseteando) {
     try {
       Object.keys(window.localStorage)
@@ -1478,12 +1667,13 @@ window.ACADEMIA = (function () {
   }
 
   aplicarSeed(persona.seed);
+  cargarCola();
 
   if (!reseteando) {
     leerAprobados().forEach(function (registro) {
       const m = modulos.find(function (x) { return x.id === Number(registro.id); });
       if (!m || m.estado === "aprobado") return;
-      aprobarEnMock(m, registro.nota, registro.aprobadoEn, null);
+      aprobarEnMock(m, registro.nota, registro.aprobadoEn);
     });
   }
 
@@ -1639,7 +1829,7 @@ window.ACADEMIA = (function () {
       const m = this.modulo(id);
       if (!m) return;
       const aprobadoEn = new Date().toISOString().slice(0, 19);
-      aprobarEnMock(m, nota, aprobadoEn, null);
+      aprobarEnMock(m, nota, aprobadoEn);
       m.fechaAprobacion = fechaCorta(aprobadoEn);
 
       const lista = leerAprobados().filter(function (r) {
@@ -1809,8 +1999,164 @@ window.ACADEMIA = (function () {
         .concat(sinAvance.map(function (e) { return Object.assign({}, e, { posicion: null }); }));
     },
 
+    /* -- Meet de soporte ----------------------------------------------------
+       Una Meet por módulo POR AGENCIA. Las reglas viven enteras acá y ninguna
+       pantalla las reimplementa, igual que con el desbloqueo:
+
+       · Deja duda quien APROBÓ el módulo — el filtro se mantiene.
+       · Agenda solo el COORDINADOR, y puede hacerlo aunque él no lo haya
+         aprobado: la Meet es de la agencia, no suya.
+       · La cola NO vence: el cupo queda agendable mientras no se use.
+       · Se ve el texto de las dudas propias siempre; las ajenas, solo el
+         coordinador. El resto ve la cantidad. */
+    esCoordinador() {
+      return agencia.coordinadorId === persona.empleadoId;
+    },
+    coordinador() {
+      return (
+        empleados.find(function (e) { return e.id === agencia.coordinadorId; }) || null
+      );
+    },
+    esMia(duda) {
+      return Boolean(duda) && duda.empleadoId === persona.empleadoId;
+    },
+    autorDuda(duda) {
+      const fila = empleados.find(function (e) { return e.id === duda.empleadoId; });
+      return fila ? fila.nombre : "Alguien del equipo";
+    },
+
+    /* El estado del cupo NO se guarda: se deriva de la cola y del turno. Un
+       estado almacenado se desincroniza en cuanto alguien retira una duda.
+
+         sin dudas          → sin-lugares
+         dudas, sin turno   → abierto
+         turno a futuro     → agendado
+         turno ya pasado    → consumido
+
+       No hay `vencido`: la cola no caduca. */
+    cupoMeet(moduloId) {
+      const id = Number(moduloId);
+      const dudas = cola.dudas
+        .filter(function (d) { return Number(d.moduloId) === id; })
+        .sort(function (a, b) {
+          return a.creadaEn < b.creadaEn ? -1 : a.creadaEn > b.creadaEn ? 1 : 0;
+        });
+      const meet =
+        cola.meets.find(function (m) { return Number(m.moduloId) === id; }) || null;
+
+      let estado;
+      if (meet) estado = meet.inicioISO > ahoraISO() ? "agendado" : "consumido";
+      else estado = dudas.length ? "abierto" : "sin-lugares";
+
+      return { estado, dudas, meet, mias: dudas.filter(this.esMia, this) };
+    },
+    misDudas(moduloId) {
+      return this.cupoMeet(moduloId).mias;
+    },
+
+    /* El filtro de acceso: la Meet se habilita al aprobar la evaluación. Una
+       duda se puede sumar hasta que la Meet se hace —el turno agendado todavía
+       no ocurrió, así que la agenda sigue abierta—, pero no después: el cupo
+       del módulo se consumió y no hay dónde tratarla. */
+    puedeDejarDuda(moduloId) {
+      return (
+        this.estadoEfectivo(moduloId) === "aprobado" &&
+        this.cupoMeet(moduloId).estado !== "consumido"
+      );
+    },
+    /* El coordinador agenda por su rol, no por su avance: `desbloqueado` no
+       entra en esta cuenta, solo el plan de la agencia. */
+    puedeAgendar(moduloId) {
+      return (
+        this.esCoordinador() &&
+        this.aplica(moduloId) &&
+        this.cupoMeet(moduloId).estado === "abierto"
+      );
+    },
+
+    /* Turnos libres de la franja. Se generan, no se enumeran: con fechas fijas
+       la demo se vence sola. Devuelve `[]` cuando la franja está agotada, que
+       es un estado propio de la pantalla y no del cupo. */
+    turnosDisponibles(moduloId) {
+      if (franjaMeet.sinTurnosPara.indexOf(Number(moduloId)) !== -1) return [];
+      const tomados = cola.meets.map(function (m) { return m.inicioISO; });
+      const ahora = ahoraISO();
+      const libres = [];
+      for (let dia = 1; dia <= franjaMeet.semanas * 7; dia++) {
+        const d = new Date();
+        d.setDate(d.getDate() + dia);
+        if (franjaMeet.dias.indexOf(d.getDay()) === -1) continue;
+        franjaMeet.horas.forEach(function (hora) {
+          const iso = enDias(dia, hora);
+          if (iso <= ahora || tomados.indexOf(iso) !== -1) return;
+          libres.push({ inicioISO: iso, duracionMin: franjaMeet.duracionMin });
+        });
+      }
+      return libres;
+    },
+
+    /* Los módulos de la agencia con cola esperando turno. Es el punto de
+       entrada del coordinador: puede tener que agendar módulos que él todavía
+       no desbloqueó, así que no puede llegar por el detalle del módulo. */
+    colasAbiertas() {
+      const self = this;
+      return this.recorrido()
+        .map(function (m) { return Object.assign({ modulo: m }, self.cupoMeet(m.id)); })
+        .filter(function (c) { return c.estado === "abierto"; });
+    },
+
+    registrarDuda(moduloId, datos) {
+      if (!this.puedeDejarDuda(moduloId)) return null;
+      const duda = {
+        moduloId: Number(moduloId),
+        empleadoId: persona.empleadoId,
+        videoId: datos.videoId || null,
+        subtema: datos.subtema || null,
+        texto: String(datos.texto || "").trim(),
+        creadaEn: ahoraISO(),
+      };
+      if (!duda.texto) return null;
+      duda.id = idDuda(duda);
+      cola.dudas.push(duda);
+      guardarCola();
+      return duda;
+    },
+    /* Solo la propia, y solo mientras el turno no se tomó: una vez agendada, la
+       duda ya es parte de la agenda que Soporte preparó. */
+    retirarDuda(dudaId) {
+      const duda = cola.dudas.find(function (d) { return d.id === dudaId; });
+      if (!duda || !this.esMia(duda)) return false;
+      if (this.cupoMeet(duda.moduloId).estado !== "abierto") return false;
+      cola.dudas = cola.dudas.filter(function (d) { return d.id !== dudaId; });
+      guardarCola();
+      return true;
+    },
+    agendarMeet(moduloId, inicioISO) {
+      if (!this.puedeAgendar(moduloId)) return null;
+      const meet = {
+        moduloId: Number(moduloId),
+        inicioISO: inicioISO,
+        duracionMin: franjaMeet.duracionMin,
+        enlace: null,
+      };
+      cola.meets.push(meet);
+      guardarCola();
+      return meet;
+    },
+    /* Las dudas vuelven a la cola: cancelar no las borra. */
+    cancelarMeet(moduloId) {
+      const id = Number(moduloId);
+      if (!this.esCoordinador() || this.cupoMeet(id).estado !== "agendado") return false;
+      cola.meets = cola.meets.filter(function (m) { return Number(m.moduloId) !== id; });
+      guardarCola();
+      return true;
+    },
+
     /* -- Formato ----------------------------------------------------------- */
     fechaCorta,
+    horaART,
+    diaLargo,
+    horaDe,
     etiquetaAcceso,
     ordenFecha,
     ordinal,
