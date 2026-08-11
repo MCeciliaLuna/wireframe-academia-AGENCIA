@@ -7,9 +7,11 @@
     "dev": "tailwindcss -i ./src/input.css -o ./assets/css/academia.css --watch",
     "build": "tailwindcss -i ./src/input.css -o ./assets/css/academia.css --minify",
     "build:dev": "tailwindcss -i ./src/input.css -o ./assets/css/academia.css",
+    "build:icons": "node scripts/build-icons.mjs",
     "serve": "npx --yes serve@14 -l 4321 ."
   },
   "devDependencies": {
+    "@tabler/icons": "^3.46.0",
     "@tailwindcss/cli": "^4.1.0",
     "tailwindcss": "^4.1.0"
   }

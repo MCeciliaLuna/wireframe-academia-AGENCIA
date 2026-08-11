@@ -39,7 +39,10 @@
           <ul class="flex flex-col divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
             <li class="flex items-start gap-3 p-4 text-sm text-gray-800">
               <span class="icon shrink-0 text-primary" data-icon="list-checks"></span>
-              <span><strong>10 preguntas</strong> tomadas al azar de un banco de 50.</span>
+              <!-- El tamaño del banco sale del modelo, no de una constante de copy:
+                   son 12 mientras el banco real no esté escrito, y decir "50" acá
+                   sería una promesa que la pantalla siguiente no cumple. -->
+              <span><strong data-preguntas-por-intento></strong> tomadas al azar de un banco de <span data-banco-total></span>.</span>
             </li>
             <li class="flex items-start gap-3 p-4 text-sm text-gray-800">
               <span class="icon shrink-0 text-primary" data-icon="target"></span>
@@ -219,6 +222,10 @@
           el.textContent = modulo.titulo;
         });
         document.querySelector("[data-modulo-eyebrow]").textContent = ACADEMIA.rotulo(moduloId);
+        document.querySelector("[data-preguntas-por-intento]").textContent =
+          ACADEMIA.quizConfig.preguntasPorIntento + " preguntas";
+        document.querySelector("[data-banco-total]").textContent =
+          ACADEMIA.banco(moduloId).length;
         ["salir", "volver-modulo", "r-revisar"].forEach(function (id) {
           const el = document.getElementById(id);
           if (el) el.href = "modulo.html?m=" + moduloId;
@@ -480,7 +487,7 @@
               ACADEMIA.total(),
               ACADEMIA.aprobados() + (yaContado ? 0 : 1)
             );
-            const pct = Math.round((aprobados / ACADEMIA.total()) * 100);
+            const pct = ACADEMIA.progresoGeneral(aprobados);
 
             if (siguiente) {
               document.getElementById("r-desbloqueo").innerHTML =
@@ -493,7 +500,11 @@
                 "<strong>Completaste tu recorrido.</strong> Tu certificado ya está disponible.";
               const cta = document.getElementById("r-siguiente-modulo");
               cta.textContent = "Ver mi certificado";
-              cta.href = "certificaciones.html?state=complete";
+              /* Sin `?state=complete`: acá el recorrido se terminó DE VERDAD
+                 —`terminar()` acaba de registrar la aprobación—, y esa
+                 simulación refecha la última aprobación a hoy 23:59:59, con lo
+                 que empeoraría artificialmente el puesto en el ranking. */
+              cta.href = "certificaciones.html";
             }
             document.getElementById("r-progreso-texto").textContent =
               aprobados + " de " + ACADEMIA.total() + " módulos · " + pct + " %";

@@ -112,7 +112,7 @@
 
         const aprobados = primeraVisita ? 0 : ACADEMIA.aprobados();
         const total = ACADEMIA.total();
-        const pct = Math.round((aprobados / total) * 100);
+        const pct = ACADEMIA.progresoGeneral(aprobados);
 
         document.querySelector("[data-progreso-texto]").textContent =
           aprobados + " de " + total + " módulos aprobados";

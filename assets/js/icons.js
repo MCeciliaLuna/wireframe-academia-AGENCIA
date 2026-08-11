@@ -1,65 +1,52 @@
 /* ============================================================================
    Academia SIGMMA — iconos
    ----------------------------------------------------------------------------
-   Trazo de 2 px sobre grilla de 24, sin relleno: el mismo lenguaje que los
-   iconos del sitio. Se hidratan desde `<span class="icon" data-icon="check">`
-   en vez de un sprite externo, porque un `<use href="archivo.svg#id">` no carga
-   bajo el protocolo `file://` y el prototipo tiene que abrirse con doble click.
+   Set de Tabler Icons (variante outline): trazo de 2 px sobre grilla de 24, sin
+   relleno, el mismo lenguaje que los iconos del sitio. El mapa de abajo lo
+   GENERA `npm run build:icons` desde el paquete `@tabler/icons` — no se edita a
+   mano. Para sumar un icono, agregá la entrada al mapa de
+   `scripts/build-icons.mjs` y regenerá.
+
+   Se hidratan desde `<span class="icon" data-icon="check">` contra este mapa y
+   no contra un sprite, porque un `<use href="archivo.svg#id">` no carga bajo el
+   protocolo `file://` y el prototipo tiene que abrirse con doble click. Por lo
+   mismo, el archivo generado se versiona en git.
    ========================================================================== */
 
+/* @generado:inicio — no editar a mano: npm run build:icons */
+/* 29 iconos · Tabler Icons (outline) · grilla 24, trazo 2 */
 window.ICONS = {
-  check: '<path d="M20 6 9 17l-5-5"/>',
-  "check-circle":
-    '<circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 4.5-5"/>',
-  lock: '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>',
-  unlock:
-    '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 7.5-2"/>',
-  play: '<path d="M8 5.5v13l10-6.5-10-6.5Z"/>',
-  "play-circle": '<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l5.5-3.5-5.5-3.5Z"/>',
-  pause: '<path d="M9 5.5v13M15 5.5v13"/>',
-  activity: '<path d="M2.5 12H6l3-8 6 16 3-8h3.5"/>',
-  "chevron-right": '<path d="m9 5 7 7-7 7"/>',
-  "chevron-left": '<path d="m15 5-7 7 7 7"/>',
-  "chevron-down": '<path d="m5 9 7 7 7-7"/>',
-  "chevron-up": '<path d="m5 15 7-7 7 7"/>',
-  "arrow-right": '<path d="M4 12h16m-6-6 6 6-6 6"/>',
-  "arrow-left": '<path d="M20 12H4m6-6-6 6 6 6"/>',
-  x: '<path d="M6 6l12 12M18 6 6 18"/>',
-  "alert-triangle":
-    '<path d="M10.3 4.3 2.6 17.5a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/>',
-  "alert-circle":
-    '<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5"/><path d="M12 16h.01"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>',
-  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3.5 2"/>',
-  logout:
-    '<path d="M14 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/><path d="m16 8 4 4-4 4"/><path d="M20 12H9"/>',
-  download: '<path d="M12 4v11"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4.5 20h15"/>',
-  award:
-    '<circle cx="12" cy="9.5" r="5.5"/><path d="m8.2 14.2-1.7 6.3 5.5-3 5.5 3-1.7-6.3"/>',
-  trophy:
-    '<path d="M7 3.5h10V9a5 5 0 0 1-10 0V3.5Z"/><path d="M7 5.5H4.5a2.5 2.5 0 0 0 0 5H6.4"/><path d="M17 5.5h2.5a2.5 2.5 0 0 1 0 5h-1.9"/><path d="M12 14v3"/><path d="M9 20.5c0-1.9 1.3-3.5 3-3.5s3 1.6 3 3.5"/><path d="M8 20.5h8"/>',
-  video: '<rect x="3" y="6" width="12.5" height="12" rx="2"/><path d="m15.5 13 5.5 3.5v-9L15.5 11Z"/>',
-  users:
-    '<circle cx="9.5" cy="8.5" r="3.5"/><path d="M3.5 20a6 6 0 0 1 12 0"/><path d="M16.5 5.2a3.5 3.5 0 0 1 0 6.6"/><path d="M18 14.6a6 6 0 0 1 2.5 5.4"/>',
-  "file-text":
-    '<path d="M14 3.5H7a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5Z"/><path d="M14 3.5v5h5"/><path d="M9 13h6M9 16.5h4"/>',
-  "list-checks":
-    '<path d="M4 6.5l2 2 3-3.5"/><path d="M4 13l2 2 3-3.5"/><path d="M4 19.5h5"/><path d="M12.5 7h7.5M12.5 13.5h7.5M12.5 20h7.5"/>',
-  "help-circle":
-    '<circle cx="12" cy="12" r="9"/><path d="M9.8 9.5a2.3 2.3 0 1 1 3.4 2c-.8.5-1.2 1-1.2 1.9"/><path d="M12 17h.01"/>',
-  refresh:
-    '<path d="M20 11a8 8 0 0 0-13.7-4.7L4 8.5"/><path d="M4 4.5v4h4"/><path d="M4 13a8 8 0 0 0 13.7 4.7L20 15.5"/><path d="M20 19.5v-4h-4"/>',
-  message:
-    '<path d="M20.5 12a7.5 7.5 0 0 1-10.9 6.7L4.5 20l1.3-4.6A7.5 7.5 0 1 1 20.5 12Z"/>',
-  "arrow-up-down": '<path d="m8 4 0 16"/><path d="m4.5 7.5 3.5-3.5 3.5 3.5"/><path d="m20 20 0-16"/><path d="m16.5 16.5 3.5 3.5 3.5-3.5"/>',
-  sort: '<path d="m6 9 6-6 6 6"/><path d="m6 15 6 6 6-6"/>',
-  wifi: '<path d="M2.5 8.5a16 16 0 0 1 19 0"/><path d="M6 12.5a11 11 0 0 1 12 0"/><path d="M9.5 16.5a6 6 0 0 1 5 0"/><path d="M12 20h.01"/>',
-  eye: '<path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/>',
-  target:
-    '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
-  sparkles:
-    '<path d="M12 3.5 13.6 8l4.4 1.6-4.4 1.6L12 15.7l-1.6-4.5L6 9.6 10.4 8 12 3.5Z"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z"/>',
+  "check": '<path d="M5 12l5 5l10 -10"/>',
+  "check-circle": '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/>',
+  "x": '<path d="M18 6l-12 12"/><path d="M6 6l12 12"/>',
+  "alert-triangle": '<path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0"/><path d="M12 16h.01"/>',
+  "alert-circle": '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+  "info": '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 9h.01"/><path d="M11 12h1v4h1"/>',
+  "clock": '<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M12 7v5l3 3"/>',
+  "lock": '<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/>',
+  "unlock": '<path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2l0 -6"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M8 11v-5a4 4 0 0 1 8 0"/>',
+  "activity": '<path d="M3 12h4l3 8l4 -16l3 8h4"/>',
+  "target": '<path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0"/><path d="M7 12a5 5 0 1 0 10 0a5 5 0 1 0 -10 0"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>',
+  "list-checks": '<path d="M3.5 5.5l1.5 1.5l2.5 -2.5"/><path d="M3.5 11.5l1.5 1.5l2.5 -2.5"/><path d="M3.5 17.5l1.5 1.5l2.5 -2.5"/><path d="M11 6l9 0"/><path d="M11 12l9 0"/><path d="M11 18l9 0"/>',
+  "refresh": '<path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/>',
+  "play": '<path d="M7 4v16l13 -8l-13 -8"/>',
+  "pause": '<path d="M6 6a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -12"/><path d="M14 6a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -12"/>',
+  "play-circle": '<path d="M15 12l-4 -4v8l4 -4"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/>',
+  "video": '<path d="M15 10l4.553 -2.276a1 1 0 0 1 1.447 .894v6.764a1 1 0 0 1 -1.447 .894l-4.553 -2.276v-4"/><path d="M3 8a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -8"/>',
+  "eye": '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/>',
+  "arrow-right": '<path d="M5 12l14 0"/><path d="M13 18l6 -6"/><path d="M13 6l6 6"/>',
+  "arrow-left": '<path d="M5 12l14 0"/><path d="M5 12l6 6"/><path d="M5 12l6 -6"/>',
+  "logout": '<path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/>',
+  "download": '<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 11l5 5l5 -5"/><path d="M12 4l0 12"/>',
+  "sort": '<path d="M3 9l4 -4l4 4m-4 -4v14"/><path d="M21 15l-4 4l-4 -4m4 4v-14"/>',
+  "users": '<path d="M5 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/>',
+  "award": '<path d="M6 9a6 6 0 1 0 12 0a6 6 0 1 0 -12 0"/><path d="M12 15l3.4 5.89l1.598 -3.233l3.598 .232l-3.4 -5.889"/><path d="M6.802 12l-3.4 5.89l3.598 -.233l1.598 3.232l3.4 -5.889"/>',
+  "trophy": '<path d="M8 21l8 0"/><path d="M12 17l0 4"/><path d="M7 4l10 0"/><path d="M17 4v8a5 5 0 0 1 -10 0v-8"/><path d="M3 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M17 9a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/>',
+  "message": '<path d="M3 20l1.3 -3.9c-2.324 -3.437 -1.426 -7.872 2.1 -10.374c3.526 -2.501 8.59 -2.296 11.845 .48c3.255 2.777 3.695 7.266 1.029 10.501c-2.666 3.235 -7.615 4.215 -11.574 2.293l-4.7 1"/>',
+  "wifi": '<path d="M12 18l.01 0"/><path d="M9.172 15.172a4 4 0 0 1 5.656 0"/><path d="M6.343 12.343a8 8 0 0 1 11.314 0"/><path d="M3.515 9.515c4.686 -4.687 12.284 -4.687 17 0"/>',
+  "sparkles": '<path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6"/>',
 };
+/* @generado:fin */
 
 (function hydrate() {
   "use strict";

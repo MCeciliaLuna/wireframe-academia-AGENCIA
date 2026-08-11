@@ -39,13 +39,16 @@ npm install
 npm run dev        # tailwindcss --watch sobre src/input.css
 npm run build      # compilado minificado → assets/css/academia.css (versionado en git)
 npm run build:dev  # igual pero sin minificar, más legible para inspeccionar
+npm run build:icons # regenera assets/js/icons.js desde @tabler/icons (versionado en git)
 npm run serve      # servidor estático en http://localhost:4321
 ```
 
 **No hay suite de tests.** La verificación en este repo es visual y estructural (ver abajo).
 
-`assets/css/academia.css` **está versionado a propósito**: permite abrir cualquier `.html` con doble
-click sobre `file://` sin instalar nada. Si tocás `src/input.css`, recompilá y commiteá el CSS.
+`assets/css/academia.css` y `assets/js/icons.js` **están versionados a propósito**: son artefactos
+generados, pero permiten abrir cualquier `.html` con doble click sobre `file://` sin instalar nada.
+Si tocás `src/input.css`, recompilá y commiteá el CSS; si tocás el mapa de
+`scripts/build-icons.mjs`, regenerá y commiteá `icons.js`.
 
 ## Arquitectura
 
@@ -70,7 +73,8 @@ Los componentes (`.btn`, `.card`, `.badge`, `.progress`, `.field`, `.modal`, `.t
 ### Sin build de HTML — chrome duplicado a propósito
 
 Los `.html` son archivos planos, sin templating. El header + nav de la app está **copiado literal en
-las 8 páginas de app**, delimitado por:
+las 6 páginas que lo llevan** —`modulos`, `modulo`, `video`, `meet`, `agencia` y
+`certificaciones`—, delimitado por:
 
 ```html
 <!-- app-shell: sincronizar con src/partials/app-header.html -->
@@ -78,11 +82,15 @@ las 8 páginas de app**, delimitado por:
 <!-- /app-shell -->
 ```
 
+Las otras tres quedan afuera a propósito: `index.html` no tiene chrome, `evaluacion.html` lleva uno
+**reducido** —durante un intento no hay navegación lateral y la única salida guarda el intento— y
+`design-system.html` lo muestra como muestra.
+
 `src/partials/app-header.html` es la **fuente canónica** (no se sirve). Si modificás el chrome,
-replicá el cambio en las 8 páginas y actualizá el partial. Al copiarlo, cambiá solo el
+replicá el cambio en las 6 páginas y actualizá el partial. Al copiarlo, cambiá solo el
 `aria-current="page"` al link que corresponda.
 
-### El contrato de URL: todas las pantallas en 9 archivos
+### El contrato de URL: todas las pantallas en 8 archivos
 
 Los estados transversales y los overlays no tienen archivo propio: se abren sobre su pantalla padre
 con query params. Esto replica cómo se comportarían en el producto real.
@@ -94,6 +102,7 @@ con query params. Esto replica cómo se comportarían en el producto real.
 | `?confirm=1` | — | Abre el modal de preguntas sin responder |
 | `?menu=open` | — | Abre el menú de avatar |
 | `?meet=` | `sin-lugares`, `abierto`, `agendado`, `consumido` | Fuerza el estado del cupo de Meet en `modulo.html`, para inspección |
+| `?cert=` | `datos`, `error`, `emitido` | Abre el modal de datos del titular en `certificaciones.html`, para inspección. **Pasa por la guarda**: sin recorrido completo no monta nada |
 | `?ver=` | `ranking` | Vista de ranking del equipo en `agencia.html` |
 | `?m=` | `0`, `10`, `20` … `95` | Módulo. Es el número del mapa, **no** la posición en el recorrido |
 | `?v=` | `BAK-M20.030` | Video, por ID permanente. Alcanza solo: el módulo se deduce del video |
@@ -116,14 +125,15 @@ No hay módulos ES (romperían `file://`). Cada archivo expone un global vía II
 | Archivo | Global | Rol |
 |---|---|---|
 | `mock-data.js` | `ACADEMIA` | Datos + derivados (`recorrido()`, `posicion(id)`, `estadoEfectivo(id)`, `secciones(id)`, `banco(id)`, `cupoMeet(id)`) y la persona activa (`persona`, `agencia`, `claveStorage()`, `claveAgencia()`) |
-| `icons.js` | `ICONS`, `renderIcons()` | Mapa de paths SVG + hidratación |
+| `icons.js` | `ICONS`, `renderIcons()` | Mapa de paths SVG + hidratación. **Generado** por `npm run build:icons` |
 | `ui.js` | `UI` | `param()`, `moduloDeLaUrl()`, `showModal()`, `avisoPantalla()`, `bloquearModulo()`, `sessionExpired()` |
 | `meet.js` | `Meet` | Bloque de estado, cola y formulario de duda. Solo pinta: las reglas están en `mock-data.js` |
 | `quiz.js` | `Quiz` | Máquina de estados de la evaluación (solo lógica, sin DOM) |
 | `player.js` | `Player` | Reproductor simulado con umbral del 80 % |
+| `certificado.js` | `Certificado` | Modal de datos del titular antes de descargar. Solo pinta: el catálogo de tipos y la validación están en `mock-data.js` |
 
-**Orden obligatorio:** `mock-data.js` → `icons.js` → `ui.js` → (`quiz.js` / `player.js` / `meet.js`) →
-script inline de la página. El script inline de cada página es su controlador.
+**Orden obligatorio:** `mock-data.js` → `icons.js` → `ui.js` → (`quiz.js` / `player.js` / `meet.js` /
+`certificado.js`) → script inline de la página. El script inline de cada página es su controlador.
 
 ### Hidratación por `data-*`
 
@@ -136,8 +146,28 @@ También cablea sin configuración: `data-dropdown` + `data-dropdown-trigger` + 
 atrapado), `data-sortable` + `data-sort-key` (orden de tabla), `data-counter-for` (contador de
 caracteres).
 
+### Iconos: Tabler, generados, no dibujados
+
 `icons.js` hidrata `<span class="icon" data-icon="nombre">`. Se usa un mapa en JS en vez de un sprite
 SVG externo porque `<use href="archivo.svg#id">` no carga bajo `file://`.
+
+**El mapa no se edita a mano: lo genera `npm run build:icons`** desde `@tabler/icons` (variante
+`outline`, devDependency). El bloque entre los marcadores `/* @generado:inicio */` y
+`/* @generado:fin */` se sobrescribe entero; el IIFE de hidratación que viene después sí es código a
+mano y el generador no lo toca.
+
+Para sumar un icono, agregá la entrada al mapa de `scripts/build-icons.mjs` y regenerá. **El nombre de
+la izquierda es el que va al HTML y no cambia nunca**, aunque Tabler renombre el suyo: para eso existe
+el mapa. Hoy son **29** — exactamente los que se usan, sin catálogo muerto.
+
+`play-circle` es el único sin equivalente literal: Tabler no publica `play-circle` ni `circle-play`,
+así que apunta a `circle-caret-right`, que es el mismo caret sobre el círculo `r=9` de `circle-check`.
+
+**El trazo se declara por CSS, no en el SVG.** El atributo `stroke-width="2"` del wrapper queda de
+respaldo, pero manda `--icon-stroke` / `--icon-stroke-sm` (`src/input.css`): el ancho *efectivo*
+depende del tamaño, y a 14 px un nominal de 2 sobre grilla de 24 rinde 1,17 px —sub-píxel, se ve
+gris—. Con 2,5 rinde 1,46 y empareja con los 1,50 de `.icon`. Si agregás un tamaño nuevo, hacé la
+cuenta: `nominal × px / 24`.
 
 ## Reglas de negocio que están cableadas
 
@@ -153,7 +183,10 @@ No las cambies sin que venga del alcance funcional. Vienen del wireframe y del M
   marca la elegida. Sin lenguaje punitivo.
 - **Una sola Meet por módulo POR AGENCIA**, con cola de dudas compartida y un coordinador que
   agenda. Es la regla que más cambió y tiene su propia sección más abajo.
-- Un **único certificado final**, sin parciales.
+- Un **único certificado final**, sin parciales. La regla vive en `ACADEMIA.puedeCertificar()` y
+  ninguna pantalla la reimplementa. Antes de descargar se confirman **tipo y número de documento**:
+  se valida solo el FORMATO (`ACADEMIA.validarDocumento`), porque el modelo no tiene documento
+  cargado, y **no se persiste nada** — se piden en cada descarga.
 - El `sub-tema` de cada pregunta es **el nombre de una sección de su módulo**. Las dos taxonomías
   están alineadas a propósito: es lo que después permite garantizar cobertura por sección en el
   sorteo y sugerir los videos de la sección fallada.
@@ -245,7 +278,8 @@ Las reglas viven enteras en `mock-data.js` y ninguna pantalla las reimplementa:
 **El estado del cupo no se guarda: se deriva.** Un `estado` almacenado se desincroniza en cuanto
 alguien retira una duda. Sin dudas → `sin-lugares`; con dudas y sin turno → `abierto`; turno a futuro
 → `agendado`; turno ya pasado → `consumido`. **No hay `vencido`: la cola no caduca.** Por eso la
-matriz de estados tiene **10** filas y no las 11 de `flujo-meet.md`.
+matriz de estados tiene **10** filas y no las 11 de la especificación original, que contemplaba una
+cola con vencimiento.
 
 `meet.js` pinta esos estados y no decide ninguno. La numeración de las filas está en su comentario de
 cabecera y en la tabla de URLs de `design-system.html`, enlazadas una a una.
@@ -332,6 +366,16 @@ recorrido del plan**, y está rotulada en la propia pantalla. Toda base de cálc
 certificado, promedio de la agencia— usa `ACADEMIA.total()`, que son los módulos **del recorrido**
 (9 con Professional, 11 con Business), nunca los 11 fijos.
 
+**Los dos porcentajes tienen una sola definición cada uno, y ninguna pantalla los recalcula.** Las
+dos aceptan un argumento por la misma razón que `puedeCertificar(n)`: hay pantallas que muestran un
+avance *hipotético* —la primera visita, `?state=complete`, el módulo recién aprobado que todavía no
+se registró, el plantel filtrado— y sin el parámetro terminaban reimplementando la cuenta inline:
+
+| Función | Para qué |
+|---|---|
+| `ACADEMIA.progresoGeneral(n?)` | % del recorrido. Sin argumento, el avance real; con `n`, uno hipotético. La usan `modulos.html`, `evaluacion.html` y `certificaciones.html` |
+| `ACADEMIA.avanceAgencia(lista?)` | % promedio del plantel. Sin argumento, el completo; con lista, un plantel filtrado. La usa `agencia.html` |
+
 ### Bancos de preguntas: cuatro escritos, siete de estructura
 
 `ACADEMIA.banco(moduloId)` devuelve el banco del módulo, nunca uno global. `BAK-M00`, `BAK-M10`,
@@ -387,6 +431,36 @@ grep -noE "\b(bg|text|border)-(red|blue|green|slate|sky|amber|emerald)-[0-9]{2,3
 grep -ln "btn-cta" *.html
 ```
 
+### El set de iconos
+
+Dos cosas que se rompen fácil: que el generador deje basura de Tabler en el artefacto, y que alguien
+pida por `data-icon` un icono que no está en el mapa. Ojo con el shim: `require` dispara el IIFE de
+hidratación, así que hace falta un `document` falso además del `window`.
+
+```bash
+npm run build:icons     # tiene que decir: 29 iconos desde Tabler Icons (outline)
+
+node -e '
+global.document={readyState:"complete",querySelectorAll:()=>[],addEventListener:()=>{}};
+global.window={}; const fs=require("fs"); require("./assets/js/icons.js");
+const I=window.ICONS;
+console.log("iconos", Object.keys(I).length);
+console.log("caja de recorte sin limpiar:",
+  Object.keys(I).filter(k=>/stroke="none"|M0 0h24v24H0z/.test(I[k])));
+const files=fs.readdirSync(".").filter(f=>f.endsWith(".html"))
+  .concat(fs.readdirSync("assets/js").map(f=>"assets/js/"+f));
+const pedidos=new Set();
+files.forEach(f=>{const s=fs.readFileSync(f,"utf8");
+  (s.match(/data-icon="([a-z0-9-]+)"/g)||[]).forEach(m=>pedidos.add(m.slice(11,-1)));
+  /* `pause` solo aparece así, en player.js: un grep de data-icon no lo ve */
+  (s.match(/dataset\.icon\s*=\s*"([a-z0-9-]+)"/g)||[]).forEach(m=>pedidos.add(m.split(/"/)[1]));});
+pedidos.delete("nombre");   /* literal de la doc en design-system.html */
+console.log("pedidos sin definir:", [...pedidos].filter(p=>!I[p]));
+console.log("definidos sin uso:", Object.keys(I).filter(k=>!pedidos.has(k)));'
+```
+
+Tiene que dar `iconos 29` y las tres listas vacías.
+
 ### Integridad del modelo de contenido
 
 ```bash
@@ -396,6 +470,14 @@ grep -c 'v("BAK-M'        assets/js/mock-data.js   # → 55 videos
 # Sin aritmética de id ni contadores paralelos al syllabus
 grep -nE "\.id - 1|\.id \+ 1|n <= 1" assets/js/*.js *.html   # → vacío
 grep -rn "m\.videos\b" *.html                                 # → vacío
+
+# La regla del certificado no vuelve a duplicarse, y el modal no se abre por el
+# cableado genérico de `ui.js`, que saltearía la guarda
+grep -rnE "aprobados\s*===\s*total|===\s*(API|ACADEMIA)\.total\(\)" *.html assets/js/*.js  # → vacío
+grep -rn 'data-modal-open="modal-certificado"' *.html assets/js/*.js                        # → vacío
+
+# Los dos porcentajes tampoco: ninguna pantalla recalcula lo que ya vive en el modelo
+grep -nE "Math\.round\(.*(aprobados|reduce)" *.html                                          # → vacío
 ```
 
 Y con Node, que carga `mock-data.js` sin navegador — 31 secciones, subtemas que son secciones de su
@@ -420,6 +502,29 @@ let seeds=[]; A.personas.forEach(p=>{ if(!A.agenciaDe(p)) seeds.push(p.clave+" a
   Object.keys(p.seed.videos).forEach(id=>{ if(!vids.has(id)) seeds.push(p.clave+" video "+id); })});
 console.log(seeds.length?seeds:"integridad de seeds ok");'
 ```
+
+### El certificado: la regla y el formato del documento
+
+`validarDocumento()` es pura —no toca storage ni DOM— justamente para poder verificarla acá:
+
+```bash
+node -e '
+global.window={location:{search:"?u=martin"},localStorage:{getItem:()=>null,setItem:()=>{},removeItem:()=>{}}};
+require("./assets/js/mock-data.js"); const A=window.ACADEMIA;
+console.log("martin", A.aprobados()+"/"+A.total(), "certifica", A.puedeCertificar());
+console.log("fila 8/9", A.puedeCertificar(8), "· 9/9", A.puedeCertificar(9));
+const casos=[["DNI","30123456",true],["DNI","30.123.456",true],["DNI","123",false],
+ ["DNI","301234567",false],["DNI","3012345A",false],["PASAPORTE","aab123456",true],
+ ["PASAPORTE","AB12",false],["CI","12345678K",true],["CI","1234",false],
+ ["LC-LE","5123456",true],["LC-LE","51234",false],["DNI","",false],["NOEXISTE","30123456",false]];
+let mal=[]; casos.forEach(c=>{const ok=A.validarDocumento(c[0],c[1])===null;
+  if(ok!==c[2]) mal.push(c[0]+" \""+c[1]+"\"")});
+console.log(mal.length?mal:"validación de documento ok", "|", A.normalizarDocumento(" 30.123.456 "));'
+```
+
+Tiene que dar `martin 9/9 certifica true`, `fila 8/9 false · 9/9 true` y
+`validación de documento ok | 30123456`. **Martín es la única de las cuatro que llega al modal por
+avance real**; las otras tres solo con `?state=complete`.
 
 ### Las cuatro personas
 
@@ -505,6 +610,19 @@ done
 ```
 
 Tiene que dar 1, 2, 3, 4, 5, 6, 7, 8, 9 y 10, en ese orden.
+
+La **guarda del certificado** se verifica igual, contando si el modal llegó a montarse. Se inyecta
+perezosamente, así que quien no puede certificar ni siquiera lo tiene en el DOM:
+
+```bash
+for q in "u=lucia&cert=datos" "u=nicolas&cert=emitido" "u=sofia&cert=error" \
+         "u=martin&cert=datos" "state=complete&cert=datos"; do
+  printf "%-28s " "$q"
+  google-chrome --headless=new --disable-gpu --dump-dom "file://$PWD/certificaciones.html?reset=1&$q" 2>/dev/null \
+   | grep -c 'id="modal-certificado"'; done
+```
+
+Tiene que dar `0 0 0 1 1`, en ese orden.
 
 Más: recorrer los deep links de `design-system.html` y compararlos contra el wireframe; revisar a
 375 / 768 / 1024 px sin scroll horizontal; y probar el recorrido de teclado (foco visible, `Esc` en

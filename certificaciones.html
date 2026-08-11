@@ -86,9 +86,13 @@
         </div>
 
         <div class="relative shrink-0 has-tooltip">
-          <a class="btn btn-cta btn-lg" id="cert-descargar" href="#">
+          <!-- Es un botón y no un link porque abre un diálogo, no navega. De
+               paso, un `<a>` sin `href` queda fuera del orden de tabulación y el
+               tooltip que explica por qué no se puede descargar nunca llegaba
+               por teclado. -->
+          <button class="btn btn-cta btn-lg" type="button" id="cert-descargar">
             <span class="icon" data-icon="download"></span>Descargar certificado PDF
-          </a>
+          </button>
           <span class="tooltip" role="tooltip" id="cert-tooltip" hidden></span>
         </div>
       </section>
@@ -121,6 +125,7 @@
     <script src="assets/js/mock-data.js"></script>
     <script src="assets/js/icons.js"></script>
     <script src="assets/js/ui.js"></script>
+    <script src="assets/js/certificado.js"></script>
     <script>
       (function () {
         "use strict";
@@ -131,8 +136,8 @@
         const simulado = UI.param("state") === "complete";
         const total = ACADEMIA.total();
         const aprobados = simulado ? total : ACADEMIA.aprobados();
-        const completo = aprobados === total;
-        const pct = Math.round((aprobados / total) * 100);
+        const completo = ACADEMIA.puedeCertificar(aprobados);
+        const pct = ACADEMIA.progresoGeneral(aprobados);
         const faltan = total - aprobados;
 
         /* La fecha de emisión es la de la última aprobación, no la de hoy: el
@@ -169,8 +174,10 @@
           sello.style.backgroundImage =
             "linear-gradient(160deg, var(--color-accent) 0%, var(--color-indigo-dark) 100%)";
           barra.classList.add("progress-complete");
-          boton.href = "#";
-          boton.setAttribute("download", "certificado-academia-sigmma.pdf");
+          /* El botón ya no promete un archivo: abre la confirmación de los datos
+             que van impresos. La guarda vive en `Certificado`, no acá — si el
+             recorrido no está completo, `cablear` no engancha nada. */
+          Certificado.cablear(boton);
         } else {
           badge.innerHTML = '<span class="badge badge-info">En progreso</span>';
           texto.innerHTML =
@@ -179,9 +186,11 @@
               : "Te faltan <strong>" + faltan + " módulos</strong> para obtener tu certificación.";
           boton.classList.remove("btn-cta");
           boton.setAttribute("aria-disabled", "true");
-          boton.removeAttribute("href");
           tooltip.hidden = false;
           tooltip.textContent = "Disponible al aprobar los " + total + " módulos";
+          /* El motivo tiene que llegar también a un lector de pantalla: el
+             tooltip solo aparece con hover o foco. */
+          boton.setAttribute("aria-describedby", "cert-tooltip");
         }
 
         /* Puesto en la agencia. Con `?state=complete` la usuaria aparece con el
@@ -286,6 +295,10 @@
           .join("");
 
         renderIcons();
+
+        /* `?cert=` abre el modal ya en un estado, para inspección. Pasa por la
+           misma guarda que el botón. */
+        Certificado.inspeccionar(UI.param("cert"));
       })();
     </script>
   </body>

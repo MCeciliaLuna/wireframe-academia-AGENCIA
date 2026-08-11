@@ -249,12 +249,11 @@
           : ACADEMIA.empleados;
 
         const activos = empleados.filter(function (e) { return e.ultimoAcceso; }).length;
-        const completos = empleados.filter(function (e) { return e.aprobados === total; }).length;
+        const completos = empleados.filter(function (e) {
+          return ACADEMIA.puedeCertificar(e.aprobados);
+        }).length;
         const sinEmpezar = empleados.filter(function (e) { return e.aprobados === 0; }).length;
-        const avance = Math.round(
-          (empleados.reduce(function (a, e) { return a + e.aprobados; }, 0) /
-            (empleados.length * total)) * 100
-        );
+        const avance = ACADEMIA.avanceAgencia(empleados);
 
         document.querySelectorAll("[data-total-modulos]").forEach(function (el) {
           el.textContent = total;
@@ -323,9 +322,9 @@
            real: sin actividad ordena -1 y queda siempre al final. */
         document.getElementById("tabla-empleados").innerHTML = empleados
           .map(function (e) {
-            const pct = Math.round((e.aprobados / total) * 100);
+            const pct = ACADEMIA.progresoGeneral(e.aprobados);
             const inactivo = !e.ultimoAcceso;
-            const completo = e.aprobados === total;
+            const completo = ACADEMIA.puedeCertificar(e.aprobados);
             const puesto = puestoPorId[e.id] || null;
             /* Badge de estado del ranking. La escala es success / info / gris:
                nunca rojo ni ámbar sobre una persona por no haber capacitado. */

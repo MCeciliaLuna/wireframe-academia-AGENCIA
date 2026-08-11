@@ -9,8 +9,8 @@ de construcción para desarrollo y como pieza presentable a negocio.
 
 **El contenido es el real del mapa:** 11 módulos BAK, 31 secciones y 55 videos con su ID permanente
 `BAK-Mxx.yyy`, tomados del mapa de contenido (`Estrategia_Grabado_..._pareto_v2`) y agrupados en
-secciones según la Parte B del cotejo del wireframe. Son ficticias las personas, la agencia, las
-duraciones, las notas y los bancos de preguntas.
+secciones según la Parte B del cotejo del wireframe. Son ficticias las personas, las dos agencias,
+las duraciones, las notas y los bancos de preguntas.
 
 ### El recorrido de un vistazo
 
@@ -48,16 +48,23 @@ plan Business el recorrido son los **11** y el candado desaparece — se puede v
 
 ```bash
 npm install
-npm run dev      # recompila al guardar src/input.css
-npm run build    # compilado minificado para entregar
-npm run serve    # servidor local en http://localhost:4321 (opcional)
+npm run dev         # recompila al guardar src/input.css
+npm run build       # compilado minificado para entregar
+npm run build:dev   # igual, sin minificar — legible para inspeccionar
+npm run build:icons # regenera assets/js/icons.js desde @tabler/icons
+npm run serve       # servidor local en http://localhost:4321 (opcional)
 ```
+
+`assets/css/academia.css` y `assets/js/icons.js` son artefactos generados y **están versionados a
+propósito**: es lo que permite abrir cualquier `.html` con doble click sobre `file://`. Si tocás
+`src/input.css` o el mapa de `scripts/build-icons.mjs`, regenerá y commiteá el artefacto.
 
 ---
 
 ## Las pantallas
 
-Viven en 9 archivos: los estados transversales y los overlays se abren sobre su pantalla padre con
+Viven en 8 archivos (el noveno, `design-system.html`, es el catálogo, no una pantalla del producto):
+los estados transversales y los overlays se abren sobre su pantalla padre con
 un parámetro en la URL, igual que pasaría en el producto real.
 `design-system.html` tiene el índice completo enlazado.
 
@@ -81,6 +88,9 @@ un parámetro en la URL, igual que pasaría en el producto real.
 | 09 | Coordinar Meet (cola + turnos) | `meet.html?u=martin&m=10` · agendada: `?u=martin&m=20` |
 | 10 | Mi progreso y certificación | `certificaciones.html` |
 | 10b | Certificación — recorrido completo | `certificaciones.html?state=complete` |
+| 10c | Certificación — confirmar los datos del titular | `certificaciones.html?state=complete&cert=datos` |
+| 10d | Certificación — documento con formato inválido | `…&cert=error` |
+| 10e | Certificación — datos confirmados, qué queda impreso | `…&cert=emitido` |
 | 11 | Mi agencia | `agencia.html` · ranking: `?ver=ranking` |
 | 12a | Vacío — primera visita al listado | `modulos.html?state=empty` |
 | 12b | Vacío — agencia sin actividad | `agencia.html?state=empty` |
@@ -135,29 +145,38 @@ Sofía (`?u=sofia`) y no está, porque es de otra agencia.
 ## Estructura
 
 ```
+├── README.md                    esta guía
+├── CLAUDE.md                    guía de trabajo sobre el repo (arquitectura y reglas)
 ├── ESTILOS-ACADEMIA.md          guía de diseño (fuente de verdad, no se toca)
-├── package.json                 @tailwindcss/cli v4
+├── package.json                 @tailwindcss/cli v4 + @tabler/icons
+├── scripts/
+│   └── build-icons.mjs          mapa nombre-del-repo → Tabler; genera icons.js
 ├── src/
 │   ├── input.css                tokens (@theme) + base + componentes
 │   └── partials/app-header.html fuente canónica del chrome de la app
 ├── assets/
-│   ├── css/academia.css         compilado y versionado
-│   ├── fonts/                   Sofia Sans + Roboto (400/700), de web-2026
+│   ├── css/academia.css         GENERADO por npm run build, versionado
+│   ├── fonts/                   Sofia Sans (400/700), de web-2026
 │   ├── img/logo.svg             de web-2026
 │   └── js/
 │       ├── mock-data.js         11 módulos con su syllabus, bancos, dos agencias,
 │       │                        las cuatro personas de prueba y las reglas
-│       ├── icons.js             set de iconos, hidratados en el cliente
+│       ├── icons.js             GENERADO por npm run build:icons, versionado
 │       ├── ui.js                modal, menú, tooltip, tablas, ?state=
 │       ├── quiz.js              máquina de estados de la evaluación
-│       └── player.js            reproductor simulado con umbral del 80 %
-└── *.html                       9 pantallas + design-system.html
+│       ├── player.js            reproductor simulado con umbral del 80 %
+│       ├── meet.js              bloque de estado, cola de dudas y formulario
+│       └── certificado.js       datos del titular antes de descargar
+└── *.html                       8 pantallas + design-system.html
 ```
 
-**El chrome está duplicado en las 8 páginas de app**, a propósito: así los `.html` se abren con
-doble click, sin build ni servidor. La versión canónica es `src/partials/app-header.html` y cada
-copia está marcada con `<!-- app-shell: sincronizar con src/partials/app-header.html -->`. Si tocás
-el header, replicalo en las 8.
+**El chrome está duplicado en las 6 páginas que lo llevan** —`modulos`, `modulo`, `video`, `meet`,
+`agencia` y `certificaciones`—, a propósito: así los `.html` se abren con doble click, sin build ni
+servidor. La versión canónica es `src/partials/app-header.html` y cada copia está marcada con
+`<!-- app-shell: sincronizar con src/partials/app-header.html -->`. Si tocás el header, replicalo en
+las 6. Las otras tres no lo llevan: `index.html` no tiene chrome, `evaluacion.html` lleva uno
+reducido —durante un intento no hay navegación lateral— y `design-system.html` lo muestra como
+muestra.
 
 ---
 
@@ -170,11 +189,12 @@ Donde la guía manda, se siguió al pie de la letra. Donde marca un hueco o una 
 | 1 | **Chrome de 108 px** | Una sola barra de 72 px, la altura real del navbar del sistema. Se descartó la topbar de 36 px: la Academia es una app y no tiene links institucionales que justifiquen una segunda fila. |
 | 2 | **Gesto de marca** | El borde de gradiente celeste→azul **encoda estado**: lo lleva la card del módulo en curso, y hay una sola por vez. También el botón secundario y el panel del login. Definido una sola vez (en `web-2026` está triplicado). |
 | 3 | **Card de módulo** | Hereda radio 16, borde 1 px, superficie `#f9fafb`, título en índigo y el hover firma (borde azul + wash celeste 10 %, sin elevación). No hereda el alto mínimo de 382 px ni el bloque de imagen. |
-| 4 | **Tamaños de botón** | S 36 / M 44 / L 48, radio 12. El `min-width: 223px` de la guía queda solo para el CTA de pantalla completa. Se agregaron los estados que faltaban: deshabilitado, cargando y variante fantasma. |
+| 4 | **Tamaños de botón** | S 36 / M 44 / L 48, radio 12. El `min-width: 223px` de la guía **no se trasladó**: ninguna pantalla tiene un CTA de página completa que lo justifique; donde hace falta ancho manda `.btn-block`. Se agregaron los estados que faltaban: deshabilitado, cargando y variante fantasma. |
 | 5 | **Naranja `#ff6b35`** | Una sola aparición en todo el producto: «Descargar certificado PDF» cuando está disponible. Nunca como color de estado. |
 | 6 | **Tokens de estado** | Se creó el set que no existía: `error` y `warning` nuevos, `success` e `info` anclados en la marca. |
 | 7 | **Escala tipográfica** | Fluida con `clamp()` entre 375 y 1440 px, en el tramo bajo: H1 40→48. La escala del sitio comercial (H1 de 72) es de landing y en una app desborda. |
 | 8 | **Pesos** | Solo 400 y 700. `font-medium` y `font-semibold` se borraron del theme: no compilan, así que no pueden colarse. |
+| 8b | **Una sola familia** | La guía lista Roboto como secundaria «para texto largo», pero la Academia no tiene texto largo: el copy más extenso son las descripciones de sección, de dos o tres renglones. Cargar una segunda familia que ningún selector aplica son ~80 KB de woff2 que el navegador baja para nada, así que Roboto se sacó. Si entra texto corrido de verdad, vuelve con su bloque de métricas. |
 | 9 | **Nombres de color** | Por rol (`primary`, `accent`, `indigo`, `success`…), nunca `color-2-normal`. |
 | 10 | **Modal** | Uno solo para todo el producto, con foco atrapado y `Esc`: el de dejar una duda y el de confirmar una cancelación usan el mismo. |
 | 11 | **Breakpoints** | Tres y cerrados: base, `md` 768, `lg` 1024. Los demás se borraron del theme. |
@@ -258,9 +278,15 @@ en `design-system.html`, sección «Decisiones abiertas». Las dos que más impo
   alternativa es acumular segundos efectivamente reproducidos (anti-scrub). La IFrame API de YouTube
   alcanza para eso —expone `getCurrentTime()`, `getDuration()` y `onStateChange`—, o sea que la
   elección es de producto, no una restricción técnica.
-- **Los bancos de preguntas de `BAK-M40` a `BAK-M95`** no están escritos: son 50 preguntas por módulo
-  de trabajo de contenido. Mientras tanto esos módulos sortean sobre un banco de estructura, y la
-  antesala de la evaluación lo avisa. Escritos y reales: M00, M10, M20 y M30.
+- **Los bancos de preguntas de `BAK-M40` a `BAK-M95`** no están escritos: es trabajo de contenido.
+  Mientras tanto esos módulos sortean sobre un banco de estructura, y la antesala de la evaluación
+  lo avisa. Escritos y reales: M00, M10, M20 y M30. Los once bancos tienen **12 preguntas** —el
+  mínimo que garantiza un set nuevo en cada reintento—; el tamaño de producción también está por
+  decidir, así que la antesala muestra el número **desde el modelo**, nunca una constante de copy.
+- **De dónde sale el documento del titular del certificado** (CE-1 / CE-2). El modelo no lo tiene: en
+  el producto llegaría del SSO o del backoffice y el campo vendría precargado. Acá lo captura la
+  Academia antes de cada descarga, valida solo el **formato** —nunca coincidencia, no hay contra qué
+  cotejar— y **no persiste nada**.
 
 Lo que quedó **cerrado por decisión** y por eso no está construido: el estado `vacío` /
 «Próximamente» (un módulo se publica solo con su syllabus completo, así que no puede pasar).
@@ -309,5 +335,5 @@ visible, `Esc` en modales y menú, foco que vuelve al disparador), y el comporta
 ## Fuera de alcance
 
 Backend, SSO real, API, la YouTube IFrame Player API (el reproductor está simulado), la generación
-del PDF del certificado, y el panel interno de staff SIGMMA — el wireframe cubre solo el lado
-agencia.
+del PDF del certificado (el prototipo confirma los datos que irían impresos y ahí termina), y el
+panel interno de staff SIGMMA — el wireframe cubre solo el lado agencia.

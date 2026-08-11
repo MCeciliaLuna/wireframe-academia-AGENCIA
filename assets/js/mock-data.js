@@ -1691,14 +1691,82 @@ window.ACADEMIA = (function () {
     whatsapp: "https://wa.me/5493815550100?text=Hola%2C%20necesito%20ayuda%20con%20la%20Academia%20SIGMMA",
   };
 
+  /* El tamaño del banco NO se declara acá: lo da `banco(moduloId).length`, que
+     es el único número verdadero. Un campo fijo se desincroniza en cuanto se
+     escribe un banco real y termina mintiendo en pantalla. */
   const quizConfig = {
     preguntasPorIntento: 10,
     umbral: 8,
-    umbralPorcentaje: 80,
-    tamanoBanco: 50,
   };
 
   const umbralVisto = 80; // % de duración para marcar un video como visto
+
+  /* -- Documento del titular del certificado --------------------------------
+     El modelo NO tiene documento: ni `personas` ni `usuario` lo traen, porque en
+     el producto real llegaría del SSO o del backoffice de SIGMMA. Así que el
+     certificado lo CAPTURA en el momento de descargar y valida solo el FORMATO
+     — nunca la coincidencia contra un dato que no existe.
+
+     Las reglas son conservadoras a propósito: rechazan lo evidentemente mal
+     escrito y no inventan rangos de emisión ni cálculo de dígito verificador.
+     Las longitudes son SUPUESTOS a confirmar con negocio (`CE-3` en la tabla de
+     decisiones abiertas del design system).
+
+     `maximo` es el `maxlength` del campo, no la regla: siempre mayor que el
+     máximo del patrón, para que un valor largo llegue a ver el error en vez de
+     que el navegador lo corte en silencio. */
+  const tiposDocumento = [
+    {
+      clave: "DNI",
+      etiqueta: "DNI",
+      etiquetaCorta: "DNI",
+      patron: /^\d{7,8}$/,
+      soloDigitos: true,
+      maximo: 12,
+      ejemplo: "30123456",
+      ayuda: "Sin puntos ni espacios. Ej.: 30123456.",
+      error: "El DNI va sin puntos, con 7 u 8 números.",
+    },
+    {
+      clave: "PASAPORTE",
+      etiqueta: "Pasaporte",
+      etiquetaCorta: "Pasaporte",
+      /* Alfanumérico y de cualquier país: la Academia también capacita a gente
+         sin documento argentino, así que no se fuerza el formato local. */
+      patron: /^[A-Z0-9]{6,12}$/,
+      soloDigitos: false,
+      maximo: 16,
+      ejemplo: "AAB123456",
+      ayuda: "Sin espacios ni guiones, entre 6 y 12 letras o números.",
+      error: "El pasaporte va sin espacios, entre 6 y 12 letras o números.",
+    },
+    {
+      clave: "CI",
+      etiqueta: "Cédula de identidad (CI)",
+      etiquetaCorta: "CI",
+      /* Cubre las cédulas del Mercosur con las que puede entrar una agencia
+         receptiva. La `K` final es el verificador chileno: se admite, no se
+         calcula. */
+      patron: /^\d{5,10}K?$/,
+      soloDigitos: false,
+      maximo: 14,
+      ejemplo: "1234567",
+      ayuda: "Sin puntos ni guiones, entre 5 y 10 números.",
+      error: "La cédula va sin puntos, entre 5 y 10 números.",
+    },
+    {
+      clave: "LC-LE",
+      etiqueta: "Libreta cívica o de enrolamiento (LC/LE)",
+      etiquetaCorta: "LC/LE",
+      /* Documentos anteriores al DNI: la numeración es más corta. */
+      patron: /^\d{6,8}$/,
+      soloDigitos: true,
+      maximo: 12,
+      ejemplo: "5123456",
+      ayuda: "Sin puntos ni espacios, entre 6 y 8 números.",
+      error: "La libreta va sin puntos, entre 6 y 8 números.",
+    },
+  ];
 
   const API = {
     usuario,
@@ -1706,6 +1774,7 @@ window.ACADEMIA = (function () {
     empleados,
     soporte,
     quizConfig,
+    tiposDocumento,
     umbralVisto,
 
     /* -- Personas de prueba ------------------------------------------------
@@ -1733,11 +1802,6 @@ window.ACADEMIA = (function () {
     recorrido() {
       return modulos.filter(function (m) {
         return m.planes.indexOf(usuario.perfil) !== -1;
-      });
-    },
-    fueraDePlan() {
-      return modulos.filter(function (m) {
-        return m.planes.indexOf(usuario.perfil) === -1;
       });
     },
     /* El plan que sí habilita el módulo, para poder nombrarlo en el aviso. */
@@ -1848,8 +1912,57 @@ window.ACADEMIA = (function () {
     total() {
       return this.recorrido().length;
     },
-    progresoGeneral() {
-      return Math.round((this.aprobados() / this.total()) * 100);
+    /* El porcentaje del recorrido, con la misma forma que `puedeCertificar`:
+       sin argumento habla del avance real; con un número, de un avance
+       hipotético —la primera visita, el `?state=complete`, el módulo que se
+       acaba de aprobar y todavía no se registró—. Estaba escrito inline en
+       `modulos.html`, `evaluacion.html` y `certificaciones.html`. */
+    progresoGeneral(n) {
+      const aprobados = typeof n === "number" ? n : this.aprobados();
+      return Math.round((aprobados / this.total()) * 100);
+    },
+
+    /* -- Certificado --------------------------------------------------------
+       La única definición de «este recorrido está certificado». Estaba escrita
+       cuatro veces —`certificaciones.html`, `agencia.html` y el cierre del
+       plantel, dos veces—, y con `total()` dependiendo del plan de la agencia,
+       una copia que se olvide de actualizar emite un certificado de menos o de
+       más. Sin argumento habla de la persona activa; con un número, de una fila
+       del plantel. La base es siempre `total()`: los módulos DEL RECORRIDO,
+       nunca los 11 del mapa.
+
+       `>=` y no `===`: un plantel sembrado a mano no puede quedar por encima
+       del recorrido y perder el certificado por un error de carga. */
+    puedeCertificar(aprobados) {
+      const n = aprobados === undefined ? this.aprobados() : Number(aprobados);
+      return n >= this.total();
+    },
+
+    /* -- Documento del titular ---------------------------------------------- */
+    tipoDocumento(clave) {
+      return tiposDocumento.filter(function (t) { return t.clave === clave; })[0] || null;
+    },
+
+    /* Lo que se imprime es esto, no lo que se tipeó: puntos, espacios, guiones
+       y barras se caen y las letras van en mayúscula. Un DNI con puntos y uno
+       sin puntos son el mismo documento. */
+    normalizarDocumento(numero) {
+      return String(numero == null ? "" : numero)
+        .replace(/[.\s\-/]/g, "")
+        .toUpperCase();
+    },
+
+    /* Pura: `null` si el formato sirve, el mensaje de error si no. No consulta
+       nada, no toca storage y no sabe de DOM — es lo que la hace verificable
+       con el shim de Node. Valida FORMATO, no identidad: el prototipo no tiene
+       contra qué cotejar. */
+    validarDocumento(claveTipo, numero) {
+      const t = this.tipoDocumento(claveTipo);
+      if (!t) return "Elegí un tipo de documento.";
+      const limpio = this.normalizarDocumento(numero);
+      if (!limpio) return "Escribí tu número de documento.";
+      if (!t.patron.test(limpio)) return t.error;
+      return null;
     },
 
     /* -- Syllabus ----------------------------------------------------------
@@ -1957,10 +2070,15 @@ window.ACADEMIA = (function () {
        Opción C del cotejo: el desbloqueo y el avance son POR USUARIO, y la
        agencia se mira agregada. La regla de agregación de este número es
        explícita y hay que nombrarla en pantalla: promedio de módulos aprobados
-       por persona sobre los del recorrido del plan. */
-    avanceAgencia() {
-      const suma = empleados.reduce(function (acc, e) { return acc + e.aprobados; }, 0);
-      return Math.round((suma / (empleados.length * this.total())) * 100);
+       por persona sobre los del recorrido del plan.
+
+       Recibe la lista para poder correr sobre un plantel filtrado —`?state=empty`
+       apaga la actividad sin cambiar el plantel—; sin argumento, el completo. */
+    avanceAgencia(lista) {
+      const filas = lista || empleados;
+      if (!filas.length) return 0;
+      const suma = filas.reduce(function (acc, e) { return acc + e.aprobados; }, 0);
+      return Math.round((suma / (filas.length * this.total())) * 100);
     },
 
     /* Ranking de la agencia por completitud del recorrido.
@@ -2049,9 +2167,6 @@ window.ACADEMIA = (function () {
       else estado = dudas.length ? "abierto" : "sin-lugares";
 
       return { estado, dudas, meet, mias: dudas.filter(this.esMia, this) };
-    },
-    misDudas(moduloId) {
-      return this.cupoMeet(moduloId).mias;
     },
 
     /* El filtro de acceso: la Meet se habilita al aprobar la evaluación. Una
@@ -2161,14 +2276,6 @@ window.ACADEMIA = (function () {
     ordenFecha,
     ordinal,
     isoHoy,
-    hoyCorto() {
-      const d = new Date();
-      return (
-        String(d.getDate()).padStart(2, "0") +
-        "/" +
-        String(d.getMonth() + 1).padStart(2, "0")
-      );
-    },
     ahoraLargo() {
       const d = new Date();
       const dd = String(d.getDate()).padStart(2, "0");
@@ -2196,7 +2303,7 @@ window.ACADEMIA = (function () {
       fila.ultimaAprobacion = p.seed.aprobados.reduce(function (ultimo, r) {
         return !ultimo || r.aprobadoEn > ultimo ? r.aprobadoEn : ultimo;
       }, null);
-      fila.certificado = fila.aprobados === API.total();
+      fila.certificado = API.puedeCertificar(fila.aprobados);
     });
 
   /* La persona logueada es la excepción: su fila se deriva del recorrido en vivo
@@ -2210,7 +2317,7 @@ window.ACADEMIA = (function () {
   miFila.ultimaAprobacion = suyos.reduce(function (ultimo, m) {
     return !ultimo || m.aprobadoEn > ultimo ? m.aprobadoEn : ultimo;
   }, null);
-  miFila.certificado = suyos.length === API.total();
+  miFila.certificado = API.puedeCertificar(suyos.length);
 
   return API;
 })();

@@ -20,6 +20,13 @@
    Solo existen los pesos 400 y 700. No usar 500/600: el browser los sintetiza.
    Los fallbacks con métricas ajustadas eliminan el salto de layout (CLS) y
    están calculados sobre los woff2 reales con base Arial.
+
+   Una sola familia. La guía lista Roboto como secundaria «para texto largo»,
+   pero la Academia no tiene texto largo: el copy más extenso son las
+   descripciones de sección, de dos o tres renglones. Una segunda familia que
+   nada aplica son ~80 KB de woff2 y dos @font-face que el navegador descarga
+   para nada, así que Roboto se sacó. Si algún día entra texto corrido de
+   verdad, vuelve — con su bloque de métricas, no sin él.
    ------------------------------------------------------------------------- */
 @font-face {
   font-family: "Sofia Sans";
@@ -36,35 +43,12 @@
   font-display: swap;
 }
 @font-face {
-  font-family: "Roboto";
-  src: url("../fonts/roboto/Roboto-Regular.woff2") format("woff2");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: "Roboto";
-  src: url("../fonts/roboto/Roboto-Bold.woff2") format("woff2");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
   font-family: "Sofia Sans Fallback";
   src: local("Arial");
   font-weight: 400 700;
   size-adjust: 121.88%;
   ascent-override: 73.84%;
   descent-override: 24.61%;
-  line-gap-override: 0%;
-}
-@font-face {
-  font-family: "Roboto Fallback";
-  src: local("Arial");
-  font-weight: 400 700;
-  size-adjust: 127.88%;
-  ascent-override: 72.55%;
-  descent-override: 19.09%;
   line-gap-override: 0%;
 }
 
@@ -76,7 +60,6 @@
   --font-sans:
     "Sofia Sans", "Sofia Sans Fallback", -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  --font-body: "Roboto", "Roboto Fallback", -apple-system, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Solo 400 y 700 existen como archivo. Al borrar el resto, `font-medium`
@@ -227,6 +210,11 @@
 /* Variables no-Tailwind usadas por los componentes de abajo */
 @theme static {
   --header-height: 72px;
+  /* Trazo del icono, en unidades de la grilla de 24. El nominal es 2, pero a
+     14 px rinde 1,17 px efectivos —sub-píxel, se ve gris— así que el tamaño
+     chico lo compensa. Ver `.icon svg` en componentes. */
+  --icon-stroke: 2;
+  --icon-stroke-sm: 2.5;
   --z-dropdown: 100;
   --z-overlay: 999;
   --z-header: 1000;
@@ -366,7 +354,14 @@
    ------------------------------------------------------------------------- */
 @layer components {
   /* -- Iconos --------------------------------------------------------------
-     Los hidrata assets/js/icons.js. Trazo de 2 px sobre grilla de 24. */
+     Set de Tabler Icons (outline), trazo de 2 sobre grilla de 24. Los genera
+     `npm run build:icons` y los hidrata assets/js/icons.js.
+
+     El trazo se declara por CSS —gana sobre el atributo `stroke-width` del
+     SVG, que queda de respaldo— porque el ancho efectivo depende del tamaño:
+     a 18 px el nominal rinde 1,5 px, pero a 14 px cae a 1,17 y se ve gris.
+     `.icon-sm` va después de `.icon` a propósito: misma especificidad, gana
+     el orden. */
   .icon {
     display: inline-block;
     flex: none;
@@ -374,9 +369,15 @@
     height: 18px;
     vertical-align: middle;
   }
+  .icon svg {
+    stroke-width: var(--icon-stroke);
+  }
   .icon-sm {
     width: 14px;
     height: 14px;
+  }
+  .icon-sm svg {
+    stroke-width: var(--icon-stroke-sm);
   }
   .icon-lg {
     width: 24px;
@@ -525,9 +526,6 @@
   }
   .btn-block {
     width: 100%;
-  }
-  .btn-wide {
-    min-width: 223px;
   }
 
   .btn-primary {

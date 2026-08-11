@@ -228,9 +228,14 @@ window.Meet = (function () {
 
     /* 5 · Ya se hizo. El cupo del módulo se consumió y no se reabre, así que es
        el único estado del que la usuaria no puede salir sola: lleva al canal de
-       soporte de siempre para que no quede en un callejón. Es una desviación
-       consciente de `flujo-meet.md` §3.5, que no admite canales alternativos, a
-       favor de §8.3, que no admite callejones sin salida. */
+       soporte de siempre para que no quede en un callejón.
+
+       Es una desviación consciente de la especificación de la Meet, que pedía
+       DOS cosas incompatibles en este estado: no ofrecer canales alternativos de
+       consulta (el flujo no deriva a WhatsApp ni a mail), y no dejar ninguna
+       pantalla sin salida. Con el cupo consumido no hay acción dentro del flujo,
+       así que la única forma de cumplir la segunda es incumplir la primera. Gana
+       la segunda: un callejón sin salida es peor que un canal de más. */
     if (ui.fila === 5) {
       return (
         '<p class="text-sm text-gray-700">La Meet de este módulo ya se realizó, el <strong>' +
